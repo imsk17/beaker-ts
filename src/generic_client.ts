@@ -156,13 +156,14 @@ export default class GenericApplicationClient {
     txParams?: algosdk.TransactionLike
   ): Promise<algosdk.ABIResult> {
 
+    const sp = await this.client.getTransactionParams().do()
     const atc = new AtomicTransactionComposer();
     atc.addMethodCall({
       appID: this.appId,
       method: method,
       methodArgs: Object.values(args),
       sender: this.getSender(),
-      suggestedParams: undefined,
+      suggestedParams: sp,
       signer: this.signer,
     });
     const results = await atc.execute(this.client, 4);
