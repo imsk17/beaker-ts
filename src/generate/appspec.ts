@@ -1,21 +1,21 @@
 import algosdk from 'algosdk';
 
-interface HintSpec { }
+export interface HintSpec { }
 
-interface DeclaredSchemaValueSpec { 
+export interface DeclaredSchemaValueSpec { 
     type: string // TODO: should be enum of uint64|bytes
     key: string // TODO: should be bytes
     desc: string
     static: boolean
 }
 
-interface DynamicSchemaValueSpec { 
+export interface DynamicSchemaValueSpec { 
     type: string // TODO: should be enum of uint64|bytes
     desc: string
     maxKeys: number
 }
 
-interface SchemaSpec {
+export interface SchemaSpec {
     declared: {
         [key: string]: DeclaredSchemaValueSpec
     },
@@ -25,7 +25,7 @@ interface SchemaSpec {
 }
 
 
-interface AppSchemaSpec {
+export interface AppSchemaSpec {
     local: SchemaSpec 
     global: SchemaSpec 
 }
