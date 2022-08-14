@@ -1,0 +1,92 @@
+{
+  "hints": {},
+  "schema": {
+    "local": { "declared": {}, "dynamic": {} },
+    "global": {
+      "declared": {
+        "asset_a": {
+          "type": "uint64",
+          "key": "a",
+          "descr": "The asset id of asset A"
+        },
+        "governor": {
+          "type": "bytes",
+          "key": "g",
+          "descr": "The current governor of this contract, allowed to do admin type actions"
+        },
+        "ratio": {
+          "type": "uint64",
+          "key": "r",
+          "descr": "The ratio between assets (A/B)*Scale"
+        },
+        "pool_token": {
+          "type": "uint64",
+          "key": "p",
+          "descr": "The asset id of the Pool Token, used to track share of pool the holder may recover"
+        },
+        "asset_b": {
+          "type": "uint64",
+          "key": "b",
+          "descr": "The asset id of asset B"
+        }
+      },
+      "dynamic": {}
+    }
+  },
+  "contract": {
+    "name": "ConstantProductAMM",
+    "methods": [
+      {
+        "name": "bootstrap",
+        "args": [
+          { "type": "pay", "name": "seed" },
+          { "type": "asset", "name": "a_asset" },
+          { "type": "asset", "name": "b_asset" }
+        ],
+        "returns": { "type": "uint64" },
+        "desc": "bootstraps the contract by opting into the assets and creating the pool token"
+      },
+      {
+        "name": "set_governor",
+        "args": [{ "type": "account", "name": "new_governor" }],
+        "returns": { "type": "void" },
+        "desc": "sets the governor of the contract, may only be called by the current governor"
+      },
+      {
+        "name": "mint",
+        "args": [
+          { "type": "axfer", "name": "a_xfer" },
+          { "type": "axfer", "name": "b_xfer" },
+          { "type": "asset", "name": "pool_asset" },
+          { "type": "asset", "name": "a_asset" },
+          { "type": "asset", "name": "b_asset" }
+        ],
+        "returns": { "type": "void" },
+        "desc": "mint pool tokens given some amount of asset A and asset B"
+      },
+      {
+        "name": "swap",
+        "args": [
+          { "type": "axfer", "name": "swap_xfer" },
+          { "type": "asset", "name": "a_asset" },
+          { "type": "asset", "name": "b_asset" }
+        ],
+        "returns": { "type": "void" },
+        "desc": "Swap some amount of either asset A or asset B for the other"
+      },
+      {
+        "name": "burn",
+        "args": [
+          { "type": "axfer", "name": "pool_xfer" },
+          { "type": "asset", "name": "pool_asset" },
+          { "type": "asset", "name": "a_asset" },
+          { "type": "asset", "name": "b_asset" }
+        ],
+        "returns": { "type": "void" },
+        "desc": "burn pool tokens to get back some amount of asset A and asset B"
+      }
+    ],
+    "desc": null,
+    "networks": {}
+  }
+}
