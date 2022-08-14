@@ -105,9 +105,9 @@ function tsTypeFromAbiType(argType: string): ts.TypeNode {
   if (STRING_TYPES.includes(argType))
     return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
 
-  //if (TXN_TYPES.includes(argType))
+  if (TXN_TYPES.includes(argType))
   //  // TODO: create a specific type for each txn type?
-  //  return factory.createIdentifier("TransactionWithSigner");
+    return factory.createTypeReferenceNode("TransactionWithSigner")
 
   return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 }
@@ -215,7 +215,8 @@ function generateContractProperties(
   descr: string,
   methods: ABIMethod[]
 ): ts.PropertyDeclaration[] {
-  // create descr property
+
+  // create desc property
   const descrProp = factory.createPropertyDeclaration(
     undefined,
     undefined,

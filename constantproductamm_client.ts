@@ -55,19 +55,19 @@ class ConstantProductAMM extends GenericApplicationClient {
             returns: { type: "void", desc: "" }
         })
     ];
-    bootstrap(seed: any, a_asset: number, b_asset: number) {
+    bootstrap(seed: TransactionWithSigner, a_asset: number, b_asset: number) {
         return this.call(getMethodByName(this.methods, "bootstrap"), { seed: seed, a_asset: a_asset, b_asset: b_asset });
     }
     set_governor(new_governor: string) {
         return this.call(getMethodByName(this.methods, "set_governor"), { new_governor: new_governor });
     }
-    mint(a_xfer: any, b_xfer: any, pool_asset: number, a_asset: number, b_asset: number) {
+    mint(a_xfer: TransactionWithSigner, b_xfer: TransactionWithSigner, pool_asset: number, a_asset: number, b_asset: number) {
         return this.call(getMethodByName(this.methods, "mint"), { a_xfer: a_xfer, b_xfer: b_xfer, pool_asset: pool_asset, a_asset: a_asset, b_asset: b_asset });
     }
-    swap(swap_xfer: any, a_asset: number, b_asset: number) {
+    swap(swap_xfer: TransactionWithSigner, a_asset: number, b_asset: number) {
         return this.call(getMethodByName(this.methods, "swap"), { swap_xfer: swap_xfer, a_asset: a_asset, b_asset: b_asset });
     }
-    burn(pool_xfer: any, pool_asset: number, a_asset: number, b_asset: number) {
+    burn(pool_xfer: TransactionWithSigner, pool_asset: number, a_asset: number, b_asset: number) {
         return this.call(getMethodByName(this.methods, "burn"), { pool_xfer: pool_xfer, pool_asset: pool_asset, a_asset: a_asset, b_asset: b_asset });
     }
 }
