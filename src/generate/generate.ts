@@ -18,6 +18,9 @@ import { writeFileSync } from "fs";
 const CLIENT_NAME = "GenericApplicationClient";
 const CLIENT_PATH = "./generic_client";
 
+const APP_SPEC_IMPORTS = "{Schema}";
+const APP_SPEC_PATH = "./generate/appspec";
+
 const ALGOSDK_IMPORTS = "algosdk, {TransactionWithSigner, ABIMethod, ABIMethodParams, getMethodByName}"
 const ALGOSDK_PATH = "algosdk"
 
@@ -93,6 +96,17 @@ export function generateImports(): ts.ImportDeclaration[] {
         false, factory.createIdentifier(CLIENT_NAME), undefined
       ),
       factory.createStringLiteral(CLIENT_PATH),
+      undefined
+    ),
+
+    // Import app spec stuff
+    factory.createImportDeclaration(
+      undefined,
+      undefined,
+      factory.createImportClause(
+        false, factory.createIdentifier(APP_SPEC_IMPORTS), undefined
+      ),
+      factory.createStringLiteral(APP_SPEC_PATH),
       undefined
     ),
 
@@ -251,15 +265,71 @@ function generateContractProperties(
     factory.createStringLiteral(source.clear)
   )
 
+  const declaredAppSchemaProps = Object.entries(schema.global.declared).map((sv: [string, DeclaredSchemaValueSpec]): ts.PropertyAssignment => {
+        return factory.createPropertyAssignment(
+            factory.createIdentifier(sv[0]),
+            factory.createObjectLiteralExpression([
+                factory.createPropertyAssignment(
+                    factory.createIdentifier("type"),
+                    factory.createStringLiteral(sv[1].type)
+                ),
+                factory.createPropertyAssignment(
+                    factory.createIdentifier("key"),
+                    factory.createStringLiteral(sv[1].key?sv[1].key:"")
+                ),
+                factory.createPropertyAssignment(
+                    factory.createIdentifier("desc"),
+                    factory.createStringLiteral(sv[1].desc?sv[1].desc:"")
+                ),
+                factory.createPropertyAssignment(
+                    factory.createIdentifier("static"),
+                    sv[1].static?factory.createTrue():factory.createFalse()
+                )
+            ])
+        )
+  }) 
+
+  const dynamicAppSchemaProps = []
+
   // Create Schema Property
-  const schemaProperty = factory.createPropertyDeclaration(
+  const appSchemaProp = factory.createPropertyDeclaration(
     undefined,
     undefined,
-    factory.createIdentifier("desc"),
+    factory.createIdentifier("appSchema"),
     undefined,
-    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-    factory.createStringLiteral(descr ? descr : "")
+    factory.createTypeReferenceNode("Schema"),
+    factory.createObjectLiteralExpression([
+        factory.createPropertyAssignment(
+            factory.createIdentifier("declared"),
+            factory.createObjectLiteralExpression(declaredAppSchemaProps, true)
+        ),
+        factory.createPropertyAssignment(
+            factory.createIdentifier("dynamic"),
+            factory.createObjectLiteralExpression(dynamicAppSchemaProps, true)
+        )
+    ], true),
   );
+
+  const declaredAcctSchemaProps = []
+  const dynamicAcctSchemaProps = []
+
+  const acctSchemaProp = factory.createPropertyDeclaration(
+    undefined,
+    undefined,
+    factory.createIdentifier("acctSchema"),
+    undefined,
+    factory.createTypeReferenceNode("Schema"),
+    factory.createObjectLiteralExpression([
+        factory.createPropertyAssignment(
+            factory.createIdentifier("declared"),
+            factory.createObjectLiteralExpression(declaredAcctSchemaProps, true)
+        ),
+        factory.createPropertyAssignment(
+            factory.createIdentifier("dynamic"),
+            factory.createObjectLiteralExpression(dynamicAcctSchemaProps, true)
+        )
+    ], true),
+  )
 
   /*
     appSchema : Schema {
@@ -364,5 +434,5 @@ function generateContractProperties(
     factory.createArrayLiteralExpression(methodAssignments, true)
   );
 
-  return [descrProp, approvalProp, clearProp, methodProps];
+  return [descrProp, appSchemaProp, acctSchemaProp, approvalProp, clearProp, methodProps];
 }
