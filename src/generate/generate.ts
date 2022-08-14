@@ -3,8 +3,8 @@ import {
   DeclaredSchemaValueSpec,
   DynamicSchemaValueSpec,
   HintSpec,
+  Schema,
   SchemaSpec,
-  AppSchemaSpec,
   AppSources,
 } from "./appspec";
 
@@ -190,15 +190,14 @@ export function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
   const contract = appSpec.contract;
   const methods = contract.methods.map((meth) => generateMethod(meth));
 
-  const props = generateContractProperties(
-    contract.description,
-    contract.methods,
-    appSpec.source,
-  );
+  const props = generateContractProperties(appSpec);
 
   return factory.createClassDeclaration(
     undefined,
-    undefined,
+     [
+      factory.createModifier(ts.SyntaxKind.ExportKeyword),
+      factory.createModifier(ts.SyntaxKind.DefaultKeyword)
+    ],
     factory.createIdentifier(contract.name),
     undefined,
     [
@@ -214,10 +213,13 @@ export function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
 }
 
 function generateContractProperties(
-  descr: string,
-  methods: ABIMethod[],
-  source: AppSources,
+    spec: AppSpec
 ): ts.PropertyDeclaration[] {
+
+  const descr = spec.contract.description
+  const methods = spec.contract.methods
+  const source = spec.source
+  const schema = spec.schema
 
   // create desc property
   const descrProp = factory.createPropertyDeclaration(
@@ -229,6 +231,7 @@ function generateContractProperties(
     factory.createStringLiteral(descr ? descr : "")
   );
 
+  // Create approval program property
   const approvalProp = factory.createPropertyDeclaration(
     undefined,
     undefined,
@@ -238,6 +241,7 @@ function generateContractProperties(
     factory.createStringLiteral(source.approval)
   )
 
+  // Create clear program property
   const clearProp = factory.createPropertyDeclaration(
     undefined,
     undefined,
@@ -246,6 +250,31 @@ function generateContractProperties(
     factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
     factory.createStringLiteral(source.clear)
   )
+
+  // Create Schema Property
+  const schemaProperty = factory.createPropertyDeclaration(
+    undefined,
+    undefined,
+    factory.createIdentifier("desc"),
+    undefined,
+    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+    factory.createStringLiteral(descr ? descr : "")
+  );
+
+  /*
+    appSchema : Schema {
+        declared:  {}
+        dynamic: {}
+    }
+
+    acctSchema: Schema {
+        declared: {}
+        dynamic: {}
+    }
+  */
+
+
+
 
   const methodAssignments: ts.Expression[] = [];
 

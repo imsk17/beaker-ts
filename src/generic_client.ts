@@ -1,5 +1,5 @@
 import algosdk, { AtomicTransactionComposer } from "algosdk";
-import { AppSpec } from "./generate/appspec";
+import { AppSpec, getStateSchema, Schema } from "./generate/appspec";
 
 export type MethodArgs = {
   [key: string]: string | number | Uint8Array | algosdk.TransactionWithSigner;
@@ -19,19 +19,23 @@ export default class GenericApplicationClient {
   approvalProgramMap: algosdk.SourceMap;
   clearProgramMap: algosdk.SourceMap;
 
-  appSpec: AppSpec;
+  appSchema: Schema
+  acctSchema: Schema
 
   signer?: algosdk.TransactionSigner;
+  sender: string
 
   constructor(opts: {
     client: algosdk.Algodv2;
     appId?: number;
     signer?: algosdk.TransactionSigner;
+    sender?: string
   }) {
     this.client = opts.client;
     this.appId = opts.appId;
     this.appAddress = algosdk.getApplicationAddress(opts.appId);
 
+    this.sender = opts.sender;
     this.signer = opts.signer;
   }
 
@@ -39,19 +43,19 @@ export default class GenericApplicationClient {
     const result = await this.client.compile(program).sourcemap(true).do();
     return [
       new Uint8Array(Buffer.from(result["result"], "base64")),
-      new algosdk.SourceMap(result["sourcemeap"]),
+      new algosdk.SourceMap(result["sourcemap"]),
     ];
   }
 
   private async ensurePrograms() {
     if (this.approvalProgramBinary === undefined) {
-      const [appBin, appMap] = await this.compile(this.approvalProgram);
+      const [appBin, appMap] = await this.compile(Buffer.from(this.approvalProgram, 'base64').toString());
       this.approvalProgramBinary = appBin;
       this.approvalProgramMap = appMap;
     }
 
     if (this.clearProgramBinary === undefined) {
-      const [clearBin, clearMap] = await this.compile(this.clearProgram);
+      const [clearBin, clearMap] = await this.compile(Buffer.from(this.clearProgram, 'base64').toString());
       this.clearProgramBinary = clearBin;
       this.clearProgramMap = clearMap;
     }
@@ -70,10 +74,8 @@ export default class GenericApplicationClient {
         onComplete: algosdk.OnApplicationComplete.NoOpOC,
         approvalProgram: this.approvalProgramBinary,
         clearProgram: this.clearProgramBinary,
-        numLocalInts: 0,
-        numLocalByteSlices: 0,
-        numGlobalInts: 0,
-        numGlobalByteSlices: 0,
+        ...this.getGlobalSchema(),
+        ...this.getLocalSchema(),
       }),
       signer: this.signer,
     });
@@ -161,6 +163,16 @@ export default class GenericApplicationClient {
   async addMethodCall() {}
 
   private getSender(): string {
-    return "TODO:";
+    return this.sender
+  }
+
+  private getLocalSchema() : {numLocalInts: number, numLocalByteSlices: number}  {
+    const s = getStateSchema(this.acctSchema)
+    return {numLocalInts: s.uints, numLocalByteSlices: s.bytes}
+  }
+
+  private getGlobalSchema(): {numGlobalInts: number, numGlobalByteSlices: number} {
+    const s = getStateSchema(this.appSchema)
+    return {numGlobalInts: s.uints, numGlobalByteSlices: s.bytes}
   }
 }
