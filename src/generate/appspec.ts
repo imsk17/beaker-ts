@@ -31,8 +31,14 @@ export interface AppSchemaSpec {
     global: SchemaSpec 
 }
 
+export interface AppSources {
+    approval: string
+    clear: string
+}
+
 export interface AppSpec {
     hints: HintSpec
     schema: AppSchemaSpec
+    source: AppSources
     contract: algosdk.ABIContract
 }

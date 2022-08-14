@@ -5,6 +5,7 @@ import {
   HintSpec,
   SchemaSpec,
   AppSchemaSpec,
+  AppSources,
 } from "./appspec";
 
 import { ABIContract, ABIMethod } from "algosdk";
@@ -15,7 +16,7 @@ import { writeFileSync } from "fs";
 // https://ts-ast-viewer.com/#
 
 const CLIENT_NAME = "GenericApplicationClient";
-const CLIENT_PATH = "./src/generic_client";
+const CLIENT_PATH = "./generic_client";
 
 const ALGOSDK_IMPORTS = "algosdk, {TransactionWithSigner, ABIMethod, ABIMethodParams, getMethodByName}"
 const ALGOSDK_PATH = "algosdk"
@@ -191,7 +192,8 @@ export function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
 
   const props = generateContractProperties(
     contract.description,
-    contract.methods
+    contract.methods,
+    appSpec.source,
   );
 
   return factory.createClassDeclaration(
@@ -213,7 +215,8 @@ export function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
 
 function generateContractProperties(
   descr: string,
-  methods: ABIMethod[]
+  methods: ABIMethod[],
+  source: AppSources,
 ): ts.PropertyDeclaration[] {
 
   // create desc property
@@ -225,6 +228,24 @@ function generateContractProperties(
     factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
     factory.createStringLiteral(descr ? descr : "")
   );
+
+  const approvalProp = factory.createPropertyDeclaration(
+    undefined,
+    undefined,
+    factory.createIdentifier("approvalProgram"),
+    undefined,
+    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+    factory.createStringLiteral(source.approval)
+  )
+
+  const clearProp = factory.createPropertyDeclaration(
+    undefined,
+    undefined,
+    factory.createIdentifier("clearProgram"),
+    undefined,
+    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+    factory.createStringLiteral(source.clear)
+  )
 
   const methodAssignments: ts.Expression[] = [];
 
@@ -314,5 +335,5 @@ function generateContractProperties(
     factory.createArrayLiteralExpression(methodAssignments, true)
   );
 
-  return [descrProp, methodProps];
+  return [descrProp, approvalProp, clearProp, methodProps];
 }

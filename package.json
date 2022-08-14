@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "gen": "npx ts-node src/tryit.ts"
+    "gen": "npx ts-node src/gen.ts",
+    "try": "npx ts-node src/try.ts"
   },
   "keywords": [],
   "author": "",
