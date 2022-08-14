@@ -21,9 +21,9 @@ const CLIENT_PATH = "./generic_client";
 const APP_SPEC_IMPORTS = "{Schema}";
 const APP_SPEC_PATH = "./generate/appspec";
 
-const ALGOSDK_IMPORTS = "algosdk, {TransactionWithSigner, ABIMethod, ABIMethodParams, getMethodByName}"
-const ALGOSDK_PATH = "algosdk"
-
+const ALGOSDK_IMPORTS =
+  "algosdk, {TransactionWithSigner, ABIMethod, ABIMethodParams, getMethodByName}";
+const ALGOSDK_PATH = "algosdk";
 
 const NUMBER_TYPES: string[] = [
   "uint8",
@@ -82,7 +82,9 @@ export function generateImports(): ts.ImportDeclaration[] {
       undefined,
       undefined,
       factory.createImportClause(
-        false, factory.createIdentifier(ALGOSDK_IMPORTS), undefined
+        false,
+        factory.createIdentifier(ALGOSDK_IMPORTS),
+        undefined
       ),
       factory.createStringLiteral(ALGOSDK_PATH),
       undefined
@@ -93,7 +95,9 @@ export function generateImports(): ts.ImportDeclaration[] {
       undefined,
       undefined,
       factory.createImportClause(
-        false, factory.createIdentifier(CLIENT_NAME), undefined
+        false,
+        factory.createIdentifier(CLIENT_NAME),
+        undefined
       ),
       factory.createStringLiteral(CLIENT_PATH),
       undefined
@@ -104,12 +108,13 @@ export function generateImports(): ts.ImportDeclaration[] {
       undefined,
       undefined,
       factory.createImportClause(
-        false, factory.createIdentifier(APP_SPEC_IMPORTS), undefined
+        false,
+        factory.createIdentifier(APP_SPEC_IMPORTS),
+        undefined
       ),
       factory.createStringLiteral(APP_SPEC_PATH),
       undefined
     ),
-
   ];
 }
 
@@ -121,8 +126,8 @@ function tsTypeFromAbiType(argType: string): ts.TypeNode {
     return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
 
   if (TXN_TYPES.includes(argType))
-  //  // TODO: create a specific type for each txn type?
-    return factory.createTypeReferenceNode("TransactionWithSigner")
+    //  // TODO: create a specific type for each txn type?
+    return factory.createTypeReferenceNode("TransactionWithSigner");
 
   return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 }
@@ -134,25 +139,27 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
 
   const abiMethodArgs: ts.PropertyAssignment[] = [];
 
-  callArgs.push(factory.createCallExpression(
-    factory.createIdentifier("getMethodByName"),
-    undefined,
-    [
+  callArgs.push(
+    factory.createCallExpression(
+      factory.createIdentifier("getMethodByName"),
+      undefined,
+      [
         factory.createPropertyAccessExpression(
-            factory.createThis(),
-            factory.createIdentifier("methods")
+          factory.createThis(),
+          factory.createIdentifier("methods")
         ),
-        factory.createStringLiteral(method.name)
-    ],
-  ))
-
+        factory.createStringLiteral(method.name),
+      ]
+    )
+  );
 
   for (const arg of method.args) {
-    abiMethodArgs.push( 
-        factory.createPropertyAssignment(
-            factory.createIdentifier(arg.name), factory.createIdentifier(arg.name)
-        )
-    )
+    abiMethodArgs.push(
+      factory.createPropertyAssignment(
+        factory.createIdentifier(arg.name),
+        factory.createIdentifier(arg.name)
+      )
+    );
 
     const typeParams = factory.createParameterDeclaration(
       undefined,
@@ -166,7 +173,6 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
 
     params.push(typeParams);
   }
-
 
   const body = factory.createBlock(
     [
@@ -183,7 +189,6 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
     ],
     true
   );
-
 
   const methodSpec = factory.createMethodDeclaration(
     undefined,
@@ -208,9 +213,9 @@ export function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
 
   return factory.createClassDeclaration(
     undefined,
-     [
+    [
       factory.createModifier(ts.SyntaxKind.ExportKeyword),
-      factory.createModifier(ts.SyntaxKind.DefaultKeyword)
+      factory.createModifier(ts.SyntaxKind.DefaultKeyword),
     ],
     factory.createIdentifier(contract.name),
     undefined,
@@ -226,14 +231,75 @@ export function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
   );
 }
 
-function generateContractProperties(
-    spec: AppSpec
-): ts.PropertyDeclaration[] {
+function copySchemaObject(so: Schema): ts.Expression {
+  const declaredAppSchemaProps = Object.entries(so.declared).map(
+    (sv: [string, DeclaredSchemaValueSpec]): ts.PropertyAssignment => {
+      return factory.createPropertyAssignment(
+        factory.createIdentifier(sv[0]),
+        factory.createObjectLiteralExpression([
+          factory.createPropertyAssignment(
+            factory.createIdentifier("type"),
+            factory.createStringLiteral(sv[1].type)
+          ),
+          factory.createPropertyAssignment(
+            factory.createIdentifier("key"),
+            factory.createStringLiteral(sv[1].key ? sv[1].key : "")
+          ),
+          factory.createPropertyAssignment(
+            factory.createIdentifier("desc"),
+            factory.createStringLiteral(sv[1].desc ? sv[1].desc : "")
+          ),
+          factory.createPropertyAssignment(
+            factory.createIdentifier("static"),
+            sv[1].static ? factory.createTrue() : factory.createFalse()
+          ),
+        ])
+      );
+    }
+  );
 
-  const descr = spec.contract.description
-  const methods = spec.contract.methods
-  const source = spec.source
-  const schema = spec.schema
+  const dynamicAppSchemaProps = Object.entries(so.dynamic).map(
+    (sv: [string, DynamicSchemaValueSpec]): ts.PropertyAssignment => {
+      return factory.createPropertyAssignment(
+        factory.createIdentifier(sv[0]),
+        factory.createObjectLiteralExpression([
+          factory.createPropertyAssignment(
+            factory.createIdentifier("type"),
+            factory.createStringLiteral(sv[1].type)
+          ),
+          factory.createPropertyAssignment(
+            factory.createIdentifier("desc"),
+            factory.createStringLiteral(sv[1].desc ? sv[1].desc : "")
+          ),
+          factory.createPropertyAssignment(
+            factory.createIdentifier("maxKeys"),
+            factory.createNumericLiteral(sv[1].maxKeys)
+          ),
+        ])
+      );
+    }
+  );
+
+  return factory.createObjectLiteralExpression(
+    [
+      factory.createPropertyAssignment(
+        factory.createIdentifier("declared"),
+        factory.createObjectLiteralExpression(declaredAppSchemaProps, true)
+      ),
+      factory.createPropertyAssignment(
+        factory.createIdentifier("dynamic"),
+        factory.createObjectLiteralExpression(dynamicAppSchemaProps, true)
+      ),
+    ],
+    true
+  );
+}
+
+function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
+  const descr = spec.contract.description;
+  const methods = spec.contract.methods;
+  const source = spec.source;
+  const schema = spec.schema;
 
   // create desc property
   const descrProp = factory.createPropertyDeclaration(
@@ -253,7 +319,7 @@ function generateContractProperties(
     undefined,
     factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
     factory.createStringLiteral(source.approval)
-  )
+  );
 
   // Create clear program property
   const clearProp = factory.createPropertyDeclaration(
@@ -263,33 +329,7 @@ function generateContractProperties(
     undefined,
     factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
     factory.createStringLiteral(source.clear)
-  )
-
-  const declaredAppSchemaProps = Object.entries(schema.global.declared).map((sv: [string, DeclaredSchemaValueSpec]): ts.PropertyAssignment => {
-        return factory.createPropertyAssignment(
-            factory.createIdentifier(sv[0]),
-            factory.createObjectLiteralExpression([
-                factory.createPropertyAssignment(
-                    factory.createIdentifier("type"),
-                    factory.createStringLiteral(sv[1].type)
-                ),
-                factory.createPropertyAssignment(
-                    factory.createIdentifier("key"),
-                    factory.createStringLiteral(sv[1].key?sv[1].key:"")
-                ),
-                factory.createPropertyAssignment(
-                    factory.createIdentifier("desc"),
-                    factory.createStringLiteral(sv[1].desc?sv[1].desc:"")
-                ),
-                factory.createPropertyAssignment(
-                    factory.createIdentifier("static"),
-                    sv[1].static?factory.createTrue():factory.createFalse()
-                )
-            ])
-        )
-  }) 
-
-  const dynamicAppSchemaProps = []
+  );
 
   // Create Schema Property
   const appSchemaProp = factory.createPropertyDeclaration(
@@ -298,20 +338,8 @@ function generateContractProperties(
     factory.createIdentifier("appSchema"),
     undefined,
     factory.createTypeReferenceNode("Schema"),
-    factory.createObjectLiteralExpression([
-        factory.createPropertyAssignment(
-            factory.createIdentifier("declared"),
-            factory.createObjectLiteralExpression(declaredAppSchemaProps, true)
-        ),
-        factory.createPropertyAssignment(
-            factory.createIdentifier("dynamic"),
-            factory.createObjectLiteralExpression(dynamicAppSchemaProps, true)
-        )
-    ], true),
+    copySchemaObject(schema.global)
   );
-
-  const declaredAcctSchemaProps = []
-  const dynamicAcctSchemaProps = []
 
   const acctSchemaProp = factory.createPropertyDeclaration(
     undefined,
@@ -319,32 +347,8 @@ function generateContractProperties(
     factory.createIdentifier("acctSchema"),
     undefined,
     factory.createTypeReferenceNode("Schema"),
-    factory.createObjectLiteralExpression([
-        factory.createPropertyAssignment(
-            factory.createIdentifier("declared"),
-            factory.createObjectLiteralExpression(declaredAcctSchemaProps, true)
-        ),
-        factory.createPropertyAssignment(
-            factory.createIdentifier("dynamic"),
-            factory.createObjectLiteralExpression(dynamicAcctSchemaProps, true)
-        )
-    ], true),
-  )
-
-  /*
-    appSchema : Schema {
-        declared:  {}
-        dynamic: {}
-    }
-
-    acctSchema: Schema {
-        declared: {}
-        dynamic: {}
-    }
-  */
-
-
-
+    copySchemaObject(schema.local)
+  );
 
   const methodAssignments: ts.Expression[] = [];
 
@@ -383,7 +387,9 @@ function generateContractProperties(
         ),
         factory.createPropertyAssignment(
           factory.createIdentifier("desc"),
-          factory.createStringLiteral(meth.returns.description?meth.returns.description:"")
+          factory.createStringLiteral(
+            meth.returns.description ? meth.returns.description : ""
+          )
         ),
       ],
       false
@@ -394,28 +400,28 @@ function generateContractProperties(
         factory.createIdentifier("ABIMethod"),
         undefined,
         [
-            factory.createObjectLiteralExpression(
-              [
-                factory.createPropertyAssignment(
-                  factory.createIdentifier("name"),
-                  factory.createStringLiteral(meth.name)
-                ),
-                factory.createPropertyAssignment(
-                  factory.createIdentifier("desc"),
-                  factory.createStringLiteral(
-                    meth.description ? meth.description : ""
-                  )
-                ),
-                factory.createPropertyAssignment(
-                  factory.createIdentifier("args"),
-                  factory.createArrayLiteralExpression(argObjs, true)
-                ),
-                factory.createPropertyAssignment(
-                  factory.createIdentifier("returns"),
-                  returnObj
-                ),
-              ],
-              true
+          factory.createObjectLiteralExpression(
+            [
+              factory.createPropertyAssignment(
+                factory.createIdentifier("name"),
+                factory.createStringLiteral(meth.name)
+              ),
+              factory.createPropertyAssignment(
+                factory.createIdentifier("desc"),
+                factory.createStringLiteral(
+                  meth.description ? meth.description : ""
+                )
+              ),
+              factory.createPropertyAssignment(
+                factory.createIdentifier("args"),
+                factory.createArrayLiteralExpression(argObjs, true)
+              ),
+              factory.createPropertyAssignment(
+                factory.createIdentifier("returns"),
+                returnObj
+              ),
+            ],
+            true
           ),
         ]
       )
@@ -434,5 +440,12 @@ function generateContractProperties(
     factory.createArrayLiteralExpression(methodAssignments, true)
   );
 
-  return [descrProp, appSchemaProp, acctSchemaProp, approvalProp, clearProp, methodProps];
+  return [
+    descrProp,
+    appSchemaProp,
+    acctSchemaProp,
+    approvalProp,
+    clearProp,
+    methodProps,
+  ];
 }
