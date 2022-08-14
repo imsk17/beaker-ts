@@ -36,5 +36,14 @@ export default class GenericApplicationClient {
 
     }
 
+    async call(){
+
+    }
+
+    async addMethodCall(){
+
+    }
+
+
 
 } 
