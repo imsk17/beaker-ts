@@ -17,6 +17,10 @@ import { writeFileSync } from "fs";
 const CLIENT_NAME = "GenericApplicationClient";
 const CLIENT_PATH = "./src/generic_client";
 
+const ALGOSDK_IMPORTS = "algosdk, {TransactionWithSigner, ABIMethod, ABIMethodParams, getMethodByName}"
+const ALGOSDK_PATH = "algosdk"
+
+
 const NUMBER_TYPES: string[] = [
   "uint8",
   "uint16",
@@ -74,13 +78,9 @@ export function generateImports(): ts.ImportDeclaration[] {
       undefined,
       undefined,
       factory.createImportClause(
-        false,
-        factory.createIdentifier(
-          "algosdk, {TransactionWithSigner, ABIMethod, ABIMethodParams, getMethodByName}"
-        ),
-        undefined
+        false, factory.createIdentifier(ALGOSDK_IMPORTS), undefined
       ),
-      factory.createStringLiteral("algosdk"),
+      factory.createStringLiteral(ALGOSDK_PATH),
       undefined
     ),
 
@@ -89,13 +89,12 @@ export function generateImports(): ts.ImportDeclaration[] {
       undefined,
       undefined,
       factory.createImportClause(
-        false,
-        factory.createIdentifier(CLIENT_NAME),
-        undefined
+        false, factory.createIdentifier(CLIENT_NAME), undefined
       ),
       factory.createStringLiteral(CLIENT_PATH),
       undefined
     ),
+
   ];
 }
 
@@ -118,7 +117,7 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
 
   const callArgs: ts.Expression[] = [];
 
-  const methodArgs: ts.PropertyAssignment[] = [];
+  const abiMethodArgs: ts.PropertyAssignment[] = [];
 
   callArgs.push(factory.createCallExpression(
     factory.createIdentifier("getMethodByName"),
@@ -134,7 +133,7 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
 
 
   for (const arg of method.args) {
-    methodArgs.push( 
+    abiMethodArgs.push( 
         factory.createPropertyAssignment(
             factory.createIdentifier(arg.name), factory.createIdentifier(arg.name)
         )
@@ -163,12 +162,13 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
             factory.createIdentifier("call")
           ),
           undefined,
-          [...callArgs, factory.createObjectLiteralExpression(methodArgs)]
+          [...callArgs, factory.createObjectLiteralExpression(abiMethodArgs)]
         )
       ),
     ],
     true
   );
+
 
   const methodSpec = factory.createMethodDeclaration(
     undefined,
