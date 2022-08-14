@@ -7,9 +7,12 @@ import {
   AppSchemaSpec,
 } from "./appspec";
 
-import { ABIMethod } from "algosdk";
+import { ABIContract, ABIMethod } from "algosdk";
 import ts, { factory } from "typescript";
 import { writeFileSync } from "fs";
+
+// AMAZING resource:
+// https://ts-ast-viewer.com/#
 
 const CLIENT_NAME = "GenericApplicationClient";
 const CLIENT_PATH = "./src/generic_client";
@@ -37,9 +40,51 @@ const TXN_TYPES: string[] = [
   "frz",
 ];
 
+export function generateClient(appSpec: AppSpec, path: string) {
+  const name = appSpec.contract.name;
+
+  const nodes: ts.Node[] = generateImports();
+
+  const classNode = generateClass(appSpec);
+  nodes.push(classNode);
+
+  const outputFile = ts
+    .createPrinter()
+    .printList(
+      ts.ListFormat.MultiLine,
+      factory.createNodeArray(nodes),
+      ts.createSourceFile(
+        name,
+        "",
+        ts.ScriptTarget.ESNext,
+        true,
+        ts.ScriptKind.TS
+      )
+    );
+
+  const file_name = `${name.toLowerCase()}_client.ts`;
+  writeFileSync(path + file_name, outputFile);
+}
+
 // create the imports for the generated client
 export function generateImports(): ts.ImportDeclaration[] {
   return [
+    // Import algosdk
+    factory.createImportDeclaration(
+      undefined,
+      undefined,
+      factory.createImportClause(
+        false,
+        factory.createIdentifier(
+          "algosdk, {TransactionWithSigner, ABIMethod, ABIMethodParams, getMethodByName}"
+        ),
+        undefined
+      ),
+      factory.createStringLiteral("algosdk"),
+      undefined
+    ),
+
+    // Import generic client
     factory.createImportDeclaration(
       undefined,
       undefined,
@@ -54,52 +99,46 @@ export function generateImports(): ts.ImportDeclaration[] {
   ];
 }
 
-function generateStruct(): ts.NodeArray<ts.Node> {
-  // create name property
-  const nameProp = factory.createPropertySignature(
-    undefined,
-    factory.createIdentifier("name"),
-    undefined,
-    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
-  );
+function tsTypeFromAbiType(argType: string): ts.TypeNode {
+  if (NUMBER_TYPES.includes(argType))
+    return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
 
-  // create age property
-  const ageProp = factory.createPropertySignature(
-    undefined,
-    factory.createIdentifier("age"),
-    undefined,
-    factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword)
-  );
+  if (STRING_TYPES.includes(argType))
+    return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
 
-  // create User type
-  const userType = factory.createTypeAliasDeclaration(
-    undefined,
-    [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-    factory.createIdentifier("User"),
-    undefined,
-    factory.createTypeLiteralNode([nameProp, ageProp])
-  );
+  //if (TXN_TYPES.includes(argType))
+  //  // TODO: create a specific type for each txn type?
+  //  return factory.createIdentifier("TransactionWithSigner");
 
-  const nodes = factory.createNodeArray([userType]);
-  return nodes;
+  return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 }
 
 export function generateMethod(method: ABIMethod): ts.ClassElement {
   const params: ts.ParameterDeclaration[] = [];
-  const identifiers: ts.Expression[] = [];
+
+  const callArgs: ts.Expression[] = [];
+
+  const methodArgs: ts.PropertyAssignment[] = [];
+
+  callArgs.push(factory.createCallExpression(
+    factory.createIdentifier("getMethodByName"),
+    undefined,
+    [
+        factory.createPropertyAccessExpression(
+            factory.createThis(),
+            factory.createIdentifier("methods")
+        ),
+        factory.createStringLiteral(method.name)
+    ],
+  ))
+
 
   for (const arg of method.args) {
-    let constraint;
-    if (NUMBER_TYPES.includes(arg.type.toString())) {
-      constraint = factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
-    } else if (STRING_TYPES.includes(arg.type.toString())) {
-      constraint = factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-    } else if (TXN_TYPES.includes(arg.type.toString())) {
-      // TODO: create a type for these
-      constraint = factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-    }
-
-    identifiers.push(factory.createIdentifier(arg.name));
+    methodArgs.push( 
+        factory.createPropertyAssignment(
+            factory.createIdentifier(arg.name), factory.createIdentifier(arg.name)
+        )
+    )
 
     const typeParams = factory.createParameterDeclaration(
       undefined,
@@ -107,8 +146,10 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
       undefined,
       arg.name,
       undefined,
-      constraint
+      tsTypeFromAbiType(arg.type.toString()),
+      undefined
     );
+
     params.push(typeParams);
   }
 
@@ -118,16 +159,16 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
       factory.createReturnStatement(
         factory.createCallExpression(
           factory.createPropertyAccessExpression(
-            factory.createThis(), factory.createIdentifier("call")
+            factory.createThis(),
+            factory.createIdentifier("call")
           ),
           undefined,
-          identifiers
+          [...callArgs, factory.createObjectLiteralExpression(methodArgs)]
         )
       ),
     ],
     true
   );
-
 
   const methodSpec = factory.createMethodDeclaration(
     undefined,
@@ -144,14 +185,19 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
   return methodSpec;
 }
 
-export function generateClass(
-  name: string,
-  methods: ts.ClassElement[]
-): ts.ClassDeclaration {
+export function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
+  const contract = appSpec.contract;
+  const methods = contract.methods.map((meth) => generateMethod(meth));
+
+  const props = generateContractProperties(
+    contract.description,
+    contract.methods
+  );
+
   return factory.createClassDeclaration(
     undefined,
     undefined,
-    factory.createIdentifier(name),
+    factory.createIdentifier(contract.name),
     undefined,
     [
       factory.createHeritageClause(ts.SyntaxKind.ExtendsKeyword, [
@@ -161,35 +207,111 @@ export function generateClass(
         ),
       ]),
     ],
-    methods
+    [...props, ...methods]
   );
 }
 
+function generateContractProperties(
+  descr: string,
+  methods: ABIMethod[]
+): ts.PropertyDeclaration[] {
+  // create descr property
+  const descrProp = factory.createPropertyDeclaration(
+    undefined,
+    undefined,
+    factory.createIdentifier("desc"),
+    undefined,
+    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+    factory.createStringLiteral(descr ? descr : "")
+  );
 
-export function generateClient(appSpec: AppSpec, path: string) {
-  console.log(appSpec);
-  const name = appSpec.contract.name;
+  const methodAssignments: ts.Expression[] = [];
 
-  const nodes: ts.Node[] = generateImports();
+  for (const meth of methods) {
+    const argObjs: ts.ObjectLiteralExpression[] = [];
 
-  const classNode = generateClass(name, appSpec.contract.methods.map(meth => generateMethod(meth)));
+    for (const arg of meth.args) {
+      argObjs.push(
+        factory.createObjectLiteralExpression(
+          [
+            factory.createPropertyAssignment(
+              factory.createIdentifier("type"),
+              factory.createStringLiteral(arg.type.toString())
+            ),
+            factory.createPropertyAssignment(
+              factory.createIdentifier("name"),
+              factory.createStringLiteral(arg.name ? arg.name : "")
+            ),
+            factory.createPropertyAssignment(
+              factory.createIdentifier("desc"),
+              factory.createStringLiteral(
+                arg.description ? arg.description : ""
+              )
+            ),
+          ],
+          false
+        )
+      );
+    }
 
-  nodes.push(classNode)
-
-  const outputFile = ts
-    .createPrinter()
-    .printList(
-      ts.ListFormat.MultiLine,
-      factory.createNodeArray(nodes),
-      ts.createSourceFile(
-        name,
-        "",
-        ts.ScriptTarget.ESNext,
-        true,
-        ts.ScriptKind.TS
-      )
+    const returnObj = factory.createObjectLiteralExpression(
+      [
+        factory.createPropertyAssignment(
+          factory.createIdentifier("type"),
+          factory.createStringLiteral(meth.returns.type.toString())
+        ),
+        factory.createPropertyAssignment(
+          factory.createIdentifier("desc"),
+          factory.createStringLiteral(meth.returns.description?meth.returns.description:"")
+        ),
+      ],
+      false
     );
 
-    const file_name = `${name.toLowerCase()}_client.ts`;
-    writeFileSync(path + file_name, outputFile);
+    methodAssignments.push(
+      factory.createNewExpression(
+        factory.createIdentifier("ABIMethod"),
+        undefined,
+        [
+            factory.createObjectLiteralExpression(
+              [
+                factory.createPropertyAssignment(
+                  factory.createIdentifier("name"),
+                  factory.createStringLiteral(meth.name)
+                ),
+                factory.createPropertyAssignment(
+                  factory.createIdentifier("desc"),
+                  factory.createStringLiteral(
+                    meth.description ? meth.description : ""
+                  )
+                ),
+                factory.createPropertyAssignment(
+                  factory.createIdentifier("args"),
+                  factory.createArrayLiteralExpression(argObjs, true)
+                ),
+                factory.createPropertyAssignment(
+                  factory.createIdentifier("returns"),
+                  returnObj
+                ),
+              ],
+              true
+          ),
+        ]
+      )
+    );
+  }
+
+  // create methods property
+  const methodProps = factory.createPropertyDeclaration(
+    undefined,
+    undefined,
+    factory.createIdentifier("methods"),
+    undefined,
+    factory.createArrayTypeNode(
+      factory.createTypeReferenceNode(factory.createIdentifier("ABIMethod"))
+    ),
+    factory.createArrayLiteralExpression(methodAssignments, true)
+  );
+
+  return [descrProp, methodProps];
 }

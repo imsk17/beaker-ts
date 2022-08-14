@@ -1,5 +1,6 @@
 import algosdk from 'algosdk';
 
+
 export interface HintSpec { }
 
 export interface DeclaredSchemaValueSpec { 

@@ -1,6 +1,9 @@
-import algosdk, { getApplicationAddress, TransactionSigner } from 'algosdk'
+import algosdk, { ABIMethod, getApplicationAddress, TransactionLike, TransactionSigner, TransactionWithSigner } from 'algosdk'
 
 
+export type MethodArgs = {
+    [key: string]: string | number | Uint8Array | TransactionWithSigner;
+}
 export default class GenericApplicationClient {
     appId: number
     appAddress: string
@@ -36,7 +39,7 @@ export default class GenericApplicationClient {
 
     }
 
-    async call(){
+    async call(method: ABIMethod, args?: MethodArgs, txParams?: TransactionLike){
 
     }
 
