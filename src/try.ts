@@ -5,6 +5,10 @@ import { getAlgodClient } from "./sandbox/clients";
 (async function(){
     const accts = await getAccounts();
     const acct = accts[0]
-    const cpamm_client = new ConstantProductAMM({client: getAlgodClient(), appId:10, signer:acct.signer, sender: acct.addr});
-    cpamm_client.create();
+
+    const appClient = new ConstantProductAMM({client: getAlgodClient(), appId:10, signer:acct.signer, sender: acct.addr});
+
+    const [appId, appAddr, txId] = await appClient.create();
+
+    console.log(`Created app ${appId} with address ${appAddr} in tx ${txId}`)
 })()

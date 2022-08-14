@@ -61,7 +61,7 @@ export default class GenericApplicationClient {
     }
   }
 
-  async create() {
+  async create(): Promise<[number, string, string]> {
     await this.ensurePrograms();
 
     const sp = await this.client.getTransactionParams().do();
@@ -81,7 +81,13 @@ export default class GenericApplicationClient {
     });
 
     try {
+
       const result = await atc.execute(this.client, 4);
+      const txinfo = await this.client.pendingTransactionInformation(result.txIDs[0]).do()
+      this.appId = txinfo['application-index']
+      this.appAddress = algosdk.getApplicationAddress(this.appId)
+      return [this.appId, this.appAddress, result.txIDs[0]]
+
     } catch (e) {
       //TODO: try wrap logic exception
       throw e;
