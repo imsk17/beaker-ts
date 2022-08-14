@@ -32,8 +32,11 @@ export default class GenericApplicationClient {
     sender?: string
   }) {
     this.client = opts.client;
-    this.appId = opts.appId;
-    this.appAddress = algosdk.getApplicationAddress(opts.appId);
+
+    if (this.appId !== undefined){
+      this.appId = opts.appId;
+      this.appAddress = algosdk.getApplicationAddress(opts.appId);
+    }
 
     this.sender = opts.sender;
     this.signer = opts.signer;

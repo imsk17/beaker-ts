@@ -6,7 +6,7 @@ import { getAlgodClient } from "./sandbox/clients";
     const accts = await getAccounts();
     const acct = accts[0]
 
-    const appClient = new ConstantProductAMM({client: getAlgodClient(), appId:10, signer:acct.signer, sender: acct.addr});
+    const appClient = new ConstantProductAMM({client: getAlgodClient(), signer:acct.signer, sender: acct.addr});
 
     const [appId, appAddr, txId] = await appClient.create();
 
