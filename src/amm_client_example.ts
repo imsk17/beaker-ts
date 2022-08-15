@@ -9,7 +9,9 @@ import { getAlgodClient } from "./sandbox/clients";
 
   // Create the app client
   const appClient = new ConstantProductAMM({
-    client: client, signer: acct.signer, sender: acct.addr,
+    client: client,
+    signer: acct.signer,
+    sender: acct.addr,
   });
 
   // Deploy the app on chain
@@ -37,38 +39,57 @@ import { getAlgodClient } from "./sandbox/clients";
 
   // Log pool token id
   const poolToken: number = Number(bootstrapResult.returnValue as bigint);
-  console.log(typeof(poolToken))
   console.log(`Created pool token: ${poolToken}`);
 
   // Opt into pool token
-  await client.sendRawTransaction(algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-    from: acct.addr,
-    suggestedParams: sp,
-    to: acct.addr,
-    amount: 0,
-    assetIndex: poolToken
-  }).signTxn(acct.privateKey)).do()
-  console.log("Opted in")
-
+  await client
+    .sendRawTransaction(
+      algosdk
+        .makeAssetTransferTxnWithSuggestedParamsFromObject({
+          from: acct.addr,
+          suggestedParams: sp,
+          to: acct.addr,
+          amount: 0,
+          assetIndex: poolToken,
+        })
+        .signTxn(acct.privateKey)
+    )
+    .do();
+  console.log("Opted in");
 
   const axfer = {
     txn: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: acct.addr, suggestedParams: sp, to: appAddr, amount: 1000, assetIndex: assetA 
+      from: acct.addr,
+      suggestedParams: sp,
+      to: appAddr,
+      amount: 1000,
+      assetIndex: assetA,
     }),
-    signer: acct.signer
-  }
+    signer: acct.signer,
+  };
 
   const bxfer = {
     txn: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: acct.addr, suggestedParams: sp, to: appAddr, amount: 10000, assetIndex: assetB
+      from: acct.addr,
+      suggestedParams: sp,
+      to: appAddr,
+      amount: 10000,
+      assetIndex: assetB,
     }),
-    signer: acct.signer
-  }
+    signer: acct.signer,
+  };
 
-  console.log("Minting pool token")
-  const mintResult = await appClient.mint(axfer, bxfer, poolToken, assetA, assetB)
-  console.log(`Mint confirmed in round: ${mintResult.txInfo['confirmed-round']}`)
-
+  console.log("Minting pool token");
+  const mintResult = await appClient.mint(
+    axfer,
+    bxfer,
+    poolToken,
+    assetA,
+    assetB
+  );
+  console.log(
+    `Mint confirmed in round: ${mintResult.txInfo["confirmed-round"]}`
+  );
 })();
 
 async function createAssets(
