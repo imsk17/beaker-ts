@@ -124,12 +124,12 @@ function tsTypeFromAbiType(argType: string): ts.TypeNode {
   if (STRING_TYPES.includes(argType))
     return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
 
-  if (TXN_TYPES.includes(argType)){
+  if (TXN_TYPES.includes(argType)) {
     const acceptableTxns: ts.TypeNode[] = [
       factory.createTypeReferenceNode("algosdk.TransactionWithSigner"),
       factory.createTypeReferenceNode("algosdk.Transaction"),
     ];
-    return factory.createUnionTypeNode(acceptableTxns)
+    return factory.createUnionTypeNode(acceptableTxns);
   }
 
   return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
@@ -283,19 +283,16 @@ function copySchemaObject(so: Schema): ts.Expression {
     }
   );
 
-  return factory.createObjectLiteralExpression(
-    [
-      factory.createPropertyAssignment(
-        factory.createIdentifier("declared"),
-        factory.createObjectLiteralExpression(declaredAppSchemaProps, true)
-      ),
-      factory.createPropertyAssignment(
-        factory.createIdentifier("dynamic"),
-        factory.createObjectLiteralExpression(dynamicAppSchemaProps, true)
-      ),
-    ],
-    true
-  );
+  return factory.createObjectLiteralExpression([
+    factory.createPropertyAssignment(
+      factory.createIdentifier("declared"),
+      factory.createObjectLiteralExpression(declaredAppSchemaProps)
+    ),
+    factory.createPropertyAssignment(
+      factory.createIdentifier("dynamic"),
+      factory.createObjectLiteralExpression(dynamicAppSchemaProps)
+    ),
+  ]);
 }
 
 function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
@@ -334,7 +331,7 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
     factory.createStringLiteral(source.clear)
   );
 
-  // Create Schema Property
+  // Create App Schema Property
   const appSchemaProp = factory.createPropertyDeclaration(
     undefined,
     undefined,
@@ -344,6 +341,7 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
     copySchemaObject(schema.global)
   );
 
+  // Create Acct schema property
   const acctSchemaProp = factory.createPropertyDeclaration(
     undefined,
     undefined,
@@ -353,79 +351,64 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
     copySchemaObject(schema.local)
   );
 
+  // Add methods
   const methodAssignments: ts.Expression[] = [];
-
   for (const meth of methods) {
-    const argObjs: ts.ObjectLiteralExpression[] = [];
-
-    for (const arg of meth.args) {
-      argObjs.push(
-        factory.createObjectLiteralExpression(
-          [
-            factory.createPropertyAssignment(
-              factory.createIdentifier("type"),
-              factory.createStringLiteral(arg.type.toString())
-            ),
-            factory.createPropertyAssignment(
-              factory.createIdentifier("name"),
-              factory.createStringLiteral(arg.name ? arg.name : "")
-            ),
-            factory.createPropertyAssignment(
-              factory.createIdentifier("desc"),
-              factory.createStringLiteral(
-                arg.description ? arg.description : ""
-              )
-            ),
-          ],
-          false
-        )
-      );
-    }
-
-    const returnObj = factory.createObjectLiteralExpression(
-      [
+    const argObjs: ts.ObjectLiteralExpression[] = meth.args.map((arg) => {
+      return factory.createObjectLiteralExpression([
         factory.createPropertyAssignment(
           factory.createIdentifier("type"),
-          factory.createStringLiteral(meth.returns.type.toString())
+          factory.createStringLiteral(arg.type.toString())
+        ),
+        factory.createPropertyAssignment(
+          factory.createIdentifier("name"),
+          factory.createStringLiteral(arg.name ? arg.name : "")
         ),
         factory.createPropertyAssignment(
           factory.createIdentifier("desc"),
-          factory.createStringLiteral(
-            meth.returns.description ? meth.returns.description : ""
-          )
+          factory.createStringLiteral(arg.description ? arg.description : "")
         ),
-      ],
-      false
-    );
+      ]);
+    });
+
+    const returnObj = factory.createObjectLiteralExpression([
+      factory.createPropertyAssignment(
+        factory.createIdentifier("type"),
+        factory.createStringLiteral(meth.returns.type.toString())
+      ),
+      factory.createPropertyAssignment(
+        factory.createIdentifier("desc"),
+        factory.createStringLiteral(
+          meth.returns.description ? meth.returns.description : ""
+        )
+      ),
+    ]);
 
     methodAssignments.push(
       factory.createNewExpression(
         factory.createIdentifier("algosdk.ABIMethod"),
         undefined,
         [
-          factory.createObjectLiteralExpression(
-            [
-              factory.createPropertyAssignment(
-                factory.createIdentifier("name"),
-                factory.createStringLiteral(meth.name)
-              ),
-              factory.createPropertyAssignment(
-                factory.createIdentifier("desc"),
-                factory.createStringLiteral(
-                  meth.description ? meth.description : ""
-                )
-              ),
-              factory.createPropertyAssignment(
-                factory.createIdentifier("args"),
-                factory.createArrayLiteralExpression(argObjs, true)
-              ),
-              factory.createPropertyAssignment(
-                factory.createIdentifier("returns"),
-                returnObj
-              ),
-            ],
-            true
-          ),
+          factory.createObjectLiteralExpression([
+            factory.createPropertyAssignment(
+              factory.createIdentifier("name"),
+              factory.createStringLiteral(meth.name)
+            ),
+            factory.createPropertyAssignment(
+              factory.createIdentifier("desc"),
+              factory.createStringLiteral(
+                meth.description ? meth.description : ""
+              )
+            ),
+            factory.createPropertyAssignment(
+              factory.createIdentifier("args"),
+              factory.createArrayLiteralExpression(argObjs)
+            ),
+            factory.createPropertyAssignment(
+              factory.createIdentifier("returns"),
+              returnObj
+            ),
+          ]),
         ]
       )
     );
@@ -438,7 +421,9 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
     factory.createIdentifier("methods"),
     undefined,
     factory.createArrayTypeNode(
-      factory.createTypeReferenceNode(factory.createIdentifier("algosdk.ABIMethod"))
+      factory.createTypeReferenceNode(
+        factory.createIdentifier("algosdk.ABIMethod")
+      )
     ),
     factory.createArrayLiteralExpression(methodAssignments, true)
   );
