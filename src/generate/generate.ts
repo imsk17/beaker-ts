@@ -8,7 +8,7 @@ import {
   AppSources,
 } from "./appspec";
 
-import algosdk, { ABIContract, ABIMethod } from "algosdk";
+import algosdk, { ABIMethod } from "algosdk";
 import ts, { factory } from "typescript";
 import { writeFileSync } from "fs";
 
@@ -117,6 +117,30 @@ export function generateImports(): ts.ImportDeclaration[] {
   ];
 }
 
+export function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
+  return factory.createClassDeclaration(
+    undefined,
+    [
+      factory.createModifier(ts.SyntaxKind.ExportKeyword),
+      factory.createModifier(ts.SyntaxKind.DefaultKeyword),
+    ],
+    factory.createIdentifier(appSpec.contract.name),
+    undefined,
+    [
+      factory.createHeritageClause(ts.SyntaxKind.ExtendsKeyword, [
+        factory.createExpressionWithTypeArguments(
+          factory.createIdentifier(CLIENT_NAME),
+          undefined
+        ),
+      ]),
+    ],
+    [
+      ...generateContractProperties(appSpec),
+      ...appSpec.contract.methods.map((meth) => generateMethodImpl(meth)),
+    ]
+  );
+}
+
 function tsTypeFromAbiType(argType: string): ts.TypeNode {
   if (NUMBER_TYPES.includes(argType))
     return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
@@ -135,7 +159,7 @@ function tsTypeFromAbiType(argType: string): ts.TypeNode {
   return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 }
 
-export function generateMethod(method: ABIMethod): ts.ClassElement {
+export function generateMethodImpl(method: ABIMethod): ts.ClassElement {
   const params: ts.ParameterDeclaration[] = [];
 
   const callArgs: ts.Expression[] = [];
@@ -206,32 +230,6 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
   );
 
   return methodSpec;
-}
-
-export function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
-  const contract = appSpec.contract;
-  const methods = contract.methods.map((meth) => generateMethod(meth));
-
-  const props = generateContractProperties(appSpec);
-
-  return factory.createClassDeclaration(
-    undefined,
-    [
-      factory.createModifier(ts.SyntaxKind.ExportKeyword),
-      factory.createModifier(ts.SyntaxKind.DefaultKeyword),
-    ],
-    factory.createIdentifier(contract.name),
-    undefined,
-    [
-      factory.createHeritageClause(ts.SyntaxKind.ExtendsKeyword, [
-        factory.createExpressionWithTypeArguments(
-          factory.createIdentifier(CLIENT_NAME),
-          undefined
-        ),
-      ]),
-    ],
-    [...props, ...methods]
-  );
 }
 
 function copySchemaObject(so: Schema): ts.Expression {

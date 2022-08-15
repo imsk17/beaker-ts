@@ -66,7 +66,7 @@ import { getAlgodClient } from "./sandbox/clients";
     from: acct.addr,
     suggestedParams: sp,
     to: appAddr,
-    amount: 1000,
+    amount: 0,
     assetIndex: assetA,
   });
 
@@ -78,18 +78,23 @@ import { getAlgodClient } from "./sandbox/clients";
     assetIndex: assetB,
   });
 
-  console.log("Minting pool token");
-  const mintResult = await appClient.mint(
-    axfer,
-    bxfer,
-    poolToken,
-    assetA,
-    assetB
-  );
+  try {
+    console.log("Minting pool token");
+    const mintResult = await appClient.mint(
+      axfer,
+      bxfer,
+      poolToken,
+      assetA,
+      assetB
+    );
 
-  console.log(
-    `Mint confirmed in round: ${mintResult.txInfo["confirmed-round"]}`
-  );
+    console.log(
+      `Mint confirmed in round: ${mintResult.txInfo["confirmed-round"]}`
+    );
+
+  } catch(e){
+    console.log(`\n\n${e.stack}\n`)
+  }
 
 })();
 
@@ -103,7 +108,7 @@ async function createAssets(
     suggestedParams: sp,
     unitName: "a",
     assetName: "Asset A",
-    total: 1000000,
+    total: 1000,
     decimals: 0,
     defaultFrozen: false,
   });

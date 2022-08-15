@@ -1,8 +1,18 @@
-import algosdk, { ABIArgument, AtomicTransactionComposer, TransactionWithSigner } from "algosdk";
+import algosdk, {
+  ABIArgument,
+  AtomicTransactionComposer,
+  TransactionWithSigner,
+} from "algosdk";
 import { AppSpec, getStateSchema, Schema } from "./generate/appspec";
+import { parseLogicError, LogicError } from "./logic_error";
 
 export type MethodArgs = {
-  [key: string]: string | number | Uint8Array | algosdk.TransactionWithSigner | algosdk.Transaction;
+  [key: string]:
+    | string
+    | number
+    | Uint8Array
+    | algosdk.TransactionWithSigner
+    | algosdk.Transaction;
 };
 export default class ApplicationClient {
   client: algosdk.Algodv2;
@@ -19,21 +29,21 @@ export default class ApplicationClient {
   approvalProgramMap: algosdk.SourceMap;
   clearProgramMap: algosdk.SourceMap;
 
-  appSchema: Schema
-  acctSchema: Schema
+  appSchema: Schema;
+  acctSchema: Schema;
 
   signer?: algosdk.TransactionSigner;
-  sender: string
+  sender: string;
 
   constructor(opts: {
     client: algosdk.Algodv2;
     appId?: number;
     signer?: algosdk.TransactionSigner;
-    sender?: string
+    sender?: string;
   }) {
     this.client = opts.client;
 
-    if (this.appId !== undefined){
+    if (this.appId !== undefined) {
       this.appId = opts.appId;
       this.appAddress = algosdk.getApplicationAddress(opts.appId);
     }
@@ -52,13 +62,17 @@ export default class ApplicationClient {
 
   private async ensurePrograms() {
     if (this.approvalProgramBinary === undefined) {
-      const [appBin, appMap] = await this.compile(Buffer.from(this.approvalProgram, 'base64').toString());
+      const [appBin, appMap] = await this.compile(
+        Buffer.from(this.approvalProgram, "base64").toString()
+      );
       this.approvalProgramBinary = appBin;
       this.approvalProgramMap = appMap;
     }
 
     if (this.clearProgramBinary === undefined) {
-      const [clearBin, clearMap] = await this.compile(Buffer.from(this.clearProgram, 'base64').toString());
+      const [clearBin, clearMap] = await this.compile(
+        Buffer.from(this.clearProgram, "base64").toString()
+      );
       this.clearProgramBinary = clearBin;
       this.clearProgramMap = clearMap;
     }
@@ -84,16 +98,15 @@ export default class ApplicationClient {
     });
 
     try {
-
       const result = await atc.execute(this.client, 4);
-      const txinfo = await this.client.pendingTransactionInformation(result.txIDs[0]).do()
-      this.appId = txinfo['application-index']
-      this.appAddress = algosdk.getApplicationAddress(this.appId)
-      return [this.appId, this.appAddress, result.txIDs[0]]
-
+      const txinfo = await this.client
+        .pendingTransactionInformation(result.txIDs[0])
+        .do();
+      this.appId = txinfo["application-index"];
+      this.appAddress = algosdk.getApplicationAddress(this.appId);
+      return [this.appId, this.appAddress, result.txIDs[0]];
     } catch (e) {
-      //TODO: try wrap logic exception
-      throw e;
+      throw this.wrapLogicError(e);
     }
   }
 
@@ -114,8 +127,7 @@ export default class ApplicationClient {
     try {
       const result = await atc.execute(this.client, 4);
     } catch (e) {
-      //TODO: try wrap logic exception
-      throw e;
+      throw this.wrapLogicError(e);
     }
   }
 
@@ -139,46 +151,93 @@ export default class ApplicationClient {
     try {
       const result = await atc.execute(this.client, 4);
     } catch (e) {
-      //TODO: try wrap logic exception
-      throw e;
+      throw this.wrapLogicError(e);
     }
   }
 
-  async optIn() {}
+  async optIn() {
+    const sp = await this.client.getTransactionParams().do();
 
-  async closeOut() {}
+    const atc = new algosdk.AtomicTransactionComposer();
+    atc.addTransaction({
+      txn: algosdk.makeApplicationOptInTxnFromObject({
+        from: this.getSender(),
+        suggestedParams: sp,
+        appIndex: this.appId,
+      }),
+      signer: this.signer,
+    });
 
-  async clearState() {}
+    try {
+      const result = await atc.execute(this.client, 4);
+    } catch (e) {
+      throw this.wrapLogicError(e);
+    }
+  }
+
+  async closeOut() {
+    const sp = await this.client.getTransactionParams().do();
+
+    const atc = new algosdk.AtomicTransactionComposer();
+    atc.addTransaction({
+      txn: algosdk.makeApplicationCloseOutTxnFromObject({
+        from: this.getSender(),
+        suggestedParams: sp,
+        appIndex: this.appId,
+      }),
+      signer: this.signer,
+    });
+
+    try {
+      const result = await atc.execute(this.client, 4);
+    } catch (e) {
+      throw this.wrapLogicError(e);
+    }
+  }
+
+  async clearState() {
+    const sp = await this.client.getTransactionParams().do();
+
+    const atc = new algosdk.AtomicTransactionComposer();
+    atc.addTransaction({
+      txn: algosdk.makeApplicationClearStateTxnFromObject({
+        from: this.getSender(),
+        suggestedParams: sp,
+        appIndex: this.appId,
+      }),
+      signer: this.signer,
+    });
+
+    try {
+      const result = await atc.execute(this.client, 4);
+    } catch (e) {
+      throw this.wrapLogicError(e);
+    }
+  }
 
   async call(
     method: algosdk.ABIMethod,
     args?: MethodArgs,
     txParams?: algosdk.TransactionLike
   ): Promise<algosdk.ABIResult> {
-
-    const sp = await this.client.getTransactionParams().do()
+    const sp = await this.client.getTransactionParams().do();
     const atc = new AtomicTransactionComposer();
 
-    const processedArgs: ABIArgument[] = []
+    const processedArgs: ABIArgument[] = [];
 
-    for(const expected_arg of method.args){
-      if(!(expected_arg.name in args)){
+    for (const expected_arg of method.args) {
+      if (!(expected_arg.name in args)) {
         // Error! (or check hints)
-        throw new Error(`Cant find required argument: ${expected_arg.name}`)
+        throw new Error(`Cant find required argument: ${expected_arg.name}`);
       }
 
       let arg = args[expected_arg.name];
 
-      if(arg instanceof algosdk.Transaction){
-        arg = { txn: arg, signer: this.signer } 
+      if (arg instanceof algosdk.Transaction) {
+        arg = { txn: arg, signer: this.signer };
       }
 
-
-      processedArgs.push(arg)
-    }
-
-    for(const entry of Object.entries(args)) {
-      const [k,v] = entry
+      processedArgs.push(arg);
     }
 
     atc.addMethodCall({
@@ -188,24 +247,46 @@ export default class ApplicationClient {
       sender: this.getSender(),
       suggestedParams: sp,
       signer: this.signer,
+      ...txParams,
     });
-    const results = await atc.execute(this.client, 4);
-    return results.methodResults[0];
+
+    try {
+      return (await atc.execute(this.client, 4)).methodResults.pop();
+    } catch (e) {
+      throw this.wrapLogicError(e);
+    }
   }
 
   async addMethodCall() {}
 
+  wrapLogicError(e: Error): Error {
+    const led = parseLogicError(e.message);
+    if (led.msg !== undefined)
+      return new LogicError(
+        led,
+        Buffer.from(this.approvalProgram, "base64").toString().split("\n"),
+        this.approvalProgramMap
+      );
+    else return e;
+  }
+
   private getSender(): string {
-    return this.sender
+    return this.sender;
   }
 
-  private getLocalSchema() : {numLocalInts: number, numLocalByteSlices: number}  {
-    const s = getStateSchema(this.acctSchema)
-    return {numLocalInts: s.uints, numLocalByteSlices: s.bytes}
+  private getLocalSchema(): {
+    numLocalInts: number;
+    numLocalByteSlices: number;
+  } {
+    const s = getStateSchema(this.acctSchema);
+    return { numLocalInts: s.uints, numLocalByteSlices: s.bytes };
   }
 
-  private getGlobalSchema(): {numGlobalInts: number, numGlobalByteSlices: number} {
-    const s = getStateSchema(this.appSchema)
-    return {numGlobalInts: s.uints, numGlobalByteSlices: s.bytes}
+  private getGlobalSchema(): {
+    numGlobalInts: number;
+    numGlobalByteSlices: number;
+  } {
+    const s = getStateSchema(this.appSchema);
+    return { numGlobalInts: s.uints, numGlobalByteSlices: s.bytes };
   }
 }
