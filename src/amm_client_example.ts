@@ -33,11 +33,42 @@ import { getAlgodClient } from "./sandbox/clients";
   };
 
   // Call bootstrap method for app we just created
-  const result = await appClient.bootstrap(seedTxn, assetA, assetB);
+  const bootstrapResult = await appClient.bootstrap(seedTxn, assetA, assetB);
 
   // Log pool token id
-  const poolToken = result.returnValue;
+  const poolToken: number = Number(bootstrapResult.returnValue as bigint);
+  console.log(typeof(poolToken))
   console.log(`Created pool token: ${poolToken}`);
+
+  // Opt into pool token
+  await client.sendRawTransaction(algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    from: acct.addr,
+    suggestedParams: sp,
+    to: acct.addr,
+    amount: 0,
+    assetIndex: poolToken
+  }).signTxn(acct.privateKey)).do()
+  console.log("Opted in")
+
+
+  const axfer = {
+    txn: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      from: acct.addr, suggestedParams: sp, to: appAddr, amount: 1000, assetIndex: assetA 
+    }),
+    signer: acct.signer
+  }
+
+  const bxfer = {
+    txn: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      from: acct.addr, suggestedParams: sp, to: appAddr, amount: 10000, assetIndex: assetB
+    }),
+    signer: acct.signer
+  }
+
+  console.log("Minting pool token")
+  const mintResult = await appClient.mint(axfer, bxfer, poolToken, assetA, assetB)
+  console.log(`Mint confirmed in round: ${mintResult.txInfo['confirmed-round']}`)
+
 })();
 
 async function createAssets(
