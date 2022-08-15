@@ -1,10 +1,10 @@
-import algosdk, { AtomicTransactionComposer } from "algosdk";
+import algosdk, { ABIArgument, AtomicTransactionComposer, TransactionWithSigner } from "algosdk";
 import { AppSpec, getStateSchema, Schema } from "./generate/appspec";
 
 export type MethodArgs = {
-  [key: string]: string | number | Uint8Array | algosdk.TransactionWithSigner;
+  [key: string]: string | number | Uint8Array | algosdk.TransactionWithSigner | algosdk.Transaction;
 };
-export default class GenericApplicationClient {
+export default class ApplicationClient {
   client: algosdk.Algodv2;
 
   appId: number;
@@ -158,10 +158,33 @@ export default class GenericApplicationClient {
 
     const sp = await this.client.getTransactionParams().do()
     const atc = new AtomicTransactionComposer();
+
+    const processedArgs: ABIArgument[] = []
+
+    for(const expected_arg of method.args){
+      if(!(expected_arg.name in args)){
+        // Error! (or check hints)
+        throw new Error(`Cant find required argument: ${expected_arg.name}`)
+      }
+
+      let arg = args[expected_arg.name];
+
+      if(arg instanceof algosdk.Transaction){
+        arg = { txn: arg, signer: this.signer } 
+      }
+
+
+      processedArgs.push(arg)
+    }
+
+    for(const entry of Object.entries(args)) {
+      const [k,v] = entry
+    }
+
     atc.addMethodCall({
       appID: this.appId,
       method: method,
-      methodArgs: Object.values(args),
+      methodArgs: processedArgs,
       sender: this.getSender(),
       suggestedParams: sp,
       signer: this.signer,

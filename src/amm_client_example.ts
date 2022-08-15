@@ -4,7 +4,10 @@ import { getAccounts, SandboxAccount } from "./sandbox/accounts";
 import { getAlgodClient } from "./sandbox/clients";
 
 (async function () {
+
+  // Get sandbox client
   const client = getAlgodClient();
+  // Take first account from sandbox
   const acct = (await getAccounts()).pop();
 
   // Create the app client
@@ -41,7 +44,7 @@ import { getAlgodClient } from "./sandbox/clients";
   const poolToken: number = Number(bootstrapResult.returnValue as bigint);
   console.log(`Created pool token: ${poolToken}`);
 
-  // Opt into pool token
+  // Opt into pool token, no need to wait for confirm in dev mode
   await client
     .sendRawTransaction(
       algosdk
@@ -57,27 +60,23 @@ import { getAlgodClient } from "./sandbox/clients";
     .do();
   console.log("Opted in");
 
-  const axfer = {
-    txn: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: acct.addr,
-      suggestedParams: sp,
-      to: appAddr,
-      amount: 1000,
-      assetIndex: assetA,
-    }),
-    signer: acct.signer,
-  };
+  // Create transfers required by method, note these are not TransactionWithSigner
+  // Since we want to re-use the same signer as the current AppClient
+  const axfer = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    from: acct.addr,
+    suggestedParams: sp,
+    to: appAddr,
+    amount: 1000,
+    assetIndex: assetA,
+  });
 
-  const bxfer = {
-    txn: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: acct.addr,
-      suggestedParams: sp,
-      to: appAddr,
-      amount: 10000,
-      assetIndex: assetB,
-    }),
-    signer: acct.signer,
-  };
+  const bxfer = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    from: acct.addr,
+    suggestedParams: sp,
+    to: appAddr,
+    amount: 10000,
+    assetIndex: assetB,
+  });
 
   console.log("Minting pool token");
   const mintResult = await appClient.mint(
@@ -87,9 +86,11 @@ import { getAlgodClient } from "./sandbox/clients";
     assetA,
     assetB
   );
+
   console.log(
     `Mint confirmed in round: ${mintResult.txInfo["confirmed-round"]}`
   );
+
 })();
 
 async function createAssets(

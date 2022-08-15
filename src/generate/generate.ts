@@ -8,21 +8,20 @@ import {
   AppSources,
 } from "./appspec";
 
-import { ABIContract, ABIMethod } from "algosdk";
+import algosdk, { ABIContract, ABIMethod } from "algosdk";
 import ts, { factory } from "typescript";
 import { writeFileSync } from "fs";
 
 // AMAZING resource:
 // https://ts-ast-viewer.com/#
 
-const CLIENT_NAME = "GenericApplicationClient";
-const CLIENT_PATH = "./generic_client";
+const CLIENT_NAME = "ApplicationClient";
+const CLIENT_PATH = "./application_client";
 
 const APP_SPEC_IMPORTS = "{Schema}";
 const APP_SPEC_PATH = "./generate/appspec";
 
-const ALGOSDK_IMPORTS =
-  "algosdk, {TransactionWithSigner, ABIMethod, ABIMethodParams, getMethodByName}";
+const ALGOSDK_IMPORTS = "algosdk";
 const ALGOSDK_PATH = "algosdk";
 
 const NUMBER_TYPES: string[] = [
@@ -125,9 +124,13 @@ function tsTypeFromAbiType(argType: string): ts.TypeNode {
   if (STRING_TYPES.includes(argType))
     return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
 
-  if (TXN_TYPES.includes(argType))
-    //  // TODO: create a specific type for each txn type?
-    return factory.createTypeReferenceNode("TransactionWithSigner");
+  if (TXN_TYPES.includes(argType)){
+    const acceptableTxns: ts.TypeNode[] = [
+      factory.createTypeReferenceNode("algosdk.TransactionWithSigner"),
+      factory.createTypeReferenceNode("algosdk.Transaction"),
+    ];
+    return factory.createUnionTypeNode(acceptableTxns)
+  }
 
   return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 }
@@ -141,7 +144,7 @@ export function generateMethod(method: ABIMethod): ts.ClassElement {
 
   callArgs.push(
     factory.createCallExpression(
-      factory.createIdentifier("getMethodByName"),
+      factory.createIdentifier("algosdk.getMethodByName"),
       undefined,
       [
         factory.createPropertyAccessExpression(
@@ -397,7 +400,7 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
 
     methodAssignments.push(
       factory.createNewExpression(
-        factory.createIdentifier("ABIMethod"),
+        factory.createIdentifier("algosdk.ABIMethod"),
         undefined,
         [
           factory.createObjectLiteralExpression(
@@ -435,7 +438,7 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
     factory.createIdentifier("methods"),
     undefined,
     factory.createArrayTypeNode(
-      factory.createTypeReferenceNode(factory.createIdentifier("ABIMethod"))
+      factory.createTypeReferenceNode(factory.createIdentifier("algosdk.ABIMethod"))
     ),
     factory.createArrayLiteralExpression(methodAssignments, true)
   );

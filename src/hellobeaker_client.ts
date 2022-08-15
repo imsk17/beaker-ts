@@ -1,5 +1,5 @@
 import algosdk, {TransactionWithSigner, ABIMethod, ABIMethodParams, getMethodByName} from "algosdk";
-import GenericApplicationClient from "./generic_client";
+import GenericApplicationClient from "./application_client";
 import {Schema} from "./generate/appspec";
 export default class HelloBeaker extends GenericApplicationClient {
     desc: string = "";
