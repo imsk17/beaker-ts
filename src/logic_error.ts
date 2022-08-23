@@ -22,20 +22,26 @@ export function parseLogicError(errMsg: string): LogicErrorDetails {
 }
 
 export class LogicError extends Error {
-    led: LogicErrorDetails
+    led: LogicErrorDetails;
+    program: string[];
     lines: number = 5;
     stack?: string;
 
     constructor(led: LogicErrorDetails, program: string[], map: algosdk.SourceMap){
         super()
         this.led = led
+        this.program = program
 
         const line = map.getLineForPc(led.pc)
         this.message = `Logic Exception at line ${line}`
+
         if(line>0){
+
             const start = line>this.lines?line-this.lines:0
             const stop = program.length>line+this.lines?line+this.lines:program.length
+
             const stack_lines = program.slice(start,stop)
+
             stack_lines[stack_lines.length/2] += " <--- Error"
 
             this.stack = stack_lines.join("\n")

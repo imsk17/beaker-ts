@@ -240,7 +240,7 @@ function copySchemaObject(so: Schema): ts.Expression {
         factory.createObjectLiteralExpression([
           factory.createPropertyAssignment(
             factory.createIdentifier("type"),
-            factory.createStringLiteral(sv[1].type)
+            factory.createStringLiteral(sv[1].type.toString())
           ),
           factory.createPropertyAssignment(
             factory.createIdentifier("key"),
@@ -266,7 +266,7 @@ function copySchemaObject(so: Schema): ts.Expression {
         factory.createObjectLiteralExpression([
           factory.createPropertyAssignment(
             factory.createIdentifier("type"),
-            factory.createStringLiteral(sv[1].type)
+            factory.createStringLiteral(sv[1].type.toString())
           ),
           factory.createPropertyAssignment(
             factory.createIdentifier("desc"),
