@@ -34,13 +34,13 @@ export function getStateSchema(s: Schema): StateSchema {
   let bytes = 0;
 
   for (const item of Object.entries(s.declared)) {
-    if (item[1].type == "bytes") bytes += 1;
-    if (item[1].type == "uint64") uints += 1;
+    if (item[1].type == Type.bytes) bytes += 1;
+    if (item[1].type == Type.uint64) uints += 1;
   }
 
   for (const item of Object.entries(s.dynamic)) {
-    if (item[1].type == "bytes") bytes += item[1].maxKeys;
-    if (item[1].type == "uint64") uints += item[1].maxKeys;
+    if (item[1].type == Type.bytes) bytes += item[1].maxKeys;
+    if (item[1].type == Type.uint64) uints += item[1].maxKeys;
   }
 
   return { uints: uints, bytes: bytes };

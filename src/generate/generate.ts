@@ -18,7 +18,7 @@ import { writeFileSync } from "fs";
 const CLIENT_NAME = "ApplicationClient";
 const CLIENT_PATH = "./application_client";
 
-const APP_SPEC_IMPORTS = "{Schema}";
+const APP_SPEC_IMPORTS = "{Schema,Type}";
 const APP_SPEC_PATH = "./generate/appspec";
 
 const ALGOSDK_IMPORTS = "algosdk";
@@ -240,7 +240,7 @@ function copySchemaObject(so: Schema): ts.Expression {
         factory.createObjectLiteralExpression([
           factory.createPropertyAssignment(
             factory.createIdentifier("type"),
-            factory.createStringLiteral(sv[1].type.toString())
+            factory.createIdentifier(`Type.${sv[1].type}`)
           ),
           factory.createPropertyAssignment(
             factory.createIdentifier("key"),
@@ -266,7 +266,7 @@ function copySchemaObject(so: Schema): ts.Expression {
         factory.createObjectLiteralExpression([
           factory.createPropertyAssignment(
             factory.createIdentifier("type"),
-            factory.createStringLiteral(sv[1].type.toString())
+            factory.createIdentifier(sv[1].type.toString())
           ),
           factory.createPropertyAssignment(
             factory.createIdentifier("desc"),
