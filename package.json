@@ -2,11 +2,14 @@
   "name": "beaker-ts",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./lib/index.js",
   "scripts": {
     "gen": "npx ts-node src/gen.ts",
-    "try": "npx ts-node src/try.ts",
-    "amm": "npx ts-node src/amm_client_example.ts"
+    "build": "tsc -p .",
+    "local": "npm install . && generate"
+  },
+  "bin": {
+    "generate": "./lib/index.js"
   },
   "keywords": [],
   "author": "",

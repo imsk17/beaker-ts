@@ -1,3 +1,5 @@
+#!/usr/bin/env ts-node
+
 import { generateClient } from "./generate/generate";
 import { AppSpec } from "./generate/appspec";
 
