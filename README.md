@@ -20,11 +20,18 @@ To generate a client, use [beaker-pyteal](https://github.com/algorand-devrel/bea
 
 ```py
 import json
+from beaker import Application
 from beaker.client import ApplicationClient
+
+class App(Application):
+    #...
+
 #...
+
 app_client = ApplicationClient(algod_client, App(), signer=signer)
 with open("app.json", "w") as f:
   f.write(json.dumps(app_client.application_spec()))
+
 ```
 
 ```sh
