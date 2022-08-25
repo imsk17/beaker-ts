@@ -18,6 +18,15 @@ npm run hello
 
 To generate a client, use [beaker-pyteal](https://github.com/algorand-devrel/beaker) to create an Application and write the app spec to json
 
+```py
+import json
+from beaker.client import ApplicationClient
+#...
+app_client = ApplicationClient(algod_client, App(), signer=signer)
+with open("app.json", "w") as f:
+  f.write(json.dumps(app_client.application_spec()))
+```
+
 ```sh
 npm run gen $PATH_TO_APP_SPEC_JSON $PATH_TO_WHERE_CLIENT_SHOULD_BE_WRITTEN 
 ```
