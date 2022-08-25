@@ -17,10 +17,10 @@ import { writeFileSync } from "fs";
 
 const CLIENT_NAME = "ApplicationClient";
 const CLIENT_IMPORTS = `{${CLIENT_NAME}}` 
-const CLIENT_PATH = "./application_client/";
+const CLIENT_PATH = "../../application_client/";
 
 const APP_SPEC_IMPORTS = "{Schema,AVMType}";
-const APP_SPEC_PATH = "./generate/";
+const APP_SPEC_PATH = "../../generate/";
 
 const ALGOSDK_IMPORTS = "algosdk";
 const ALGOSDK_PATH = "algosdk";
