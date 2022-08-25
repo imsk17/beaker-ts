@@ -4,7 +4,7 @@
   "description": "",
   "main": "./lib/index.js",
   "scripts": {
-    "gen": "npx ts-node src/gen.ts",
+    "gen": "npx ts-node src/generate.ts",
     "build": "tsc -p .",
     "local": "npm install -g  && beaker generate example_specs/hello.json src/",
     "package":"npm pkg . --output beaker"
