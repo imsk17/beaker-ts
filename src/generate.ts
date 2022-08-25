@@ -1,7 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { generateClient } from "./generate/generate";
-import { AppSpec } from "./generate/appspec";
+import { generateApplicationClient, AppSpec } from "./generate/";
 import fs from "fs";
 
 
@@ -11,7 +10,7 @@ const args = process.argv
 const path = args[args.length-1]
 const spec = args[args.length-2]
 
-generateClient(
+generateApplicationClient(
   JSON.parse(fs.readFileSync(spec).toString()) as AppSpec,
   path 
 );

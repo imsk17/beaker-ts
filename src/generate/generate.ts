@@ -16,10 +16,11 @@ import { writeFileSync } from "fs";
 // https://ts-ast-viewer.com/#
 
 const CLIENT_NAME = "ApplicationClient";
-const CLIENT_PATH = "./application_client";
+const CLIENT_IMPORTS = `{${CLIENT_NAME}}` 
+const CLIENT_PATH = "./application_client/";
 
-const APP_SPEC_IMPORTS = "{Schema,Type}";
-const APP_SPEC_PATH = "./generate/appspec";
+const APP_SPEC_IMPORTS = "{Schema,AVMType}";
+const APP_SPEC_PATH = "./generate/";
 
 const ALGOSDK_IMPORTS = "algosdk";
 const ALGOSDK_PATH = "algosdk";
@@ -47,7 +48,7 @@ const TXN_TYPES: string[] = [
   "frz",
 ];
 
-export function generateClient(appSpec: AppSpec, path: string) {
+export default function generateApplicationClient(appSpec: AppSpec, path: string) {
   const name = appSpec.contract.name;
 
   const nodes: ts.Node[] = generateImports();
@@ -74,7 +75,7 @@ export function generateClient(appSpec: AppSpec, path: string) {
 }
 
 // create the imports for the generated client
-export function generateImports(): ts.ImportDeclaration[] {
+function generateImports(): ts.ImportDeclaration[] {
   return [
     // Import algosdk
     factory.createImportDeclaration(
@@ -95,7 +96,7 @@ export function generateImports(): ts.ImportDeclaration[] {
       undefined,
       factory.createImportClause(
         false,
-        factory.createIdentifier(CLIENT_NAME),
+        factory.createIdentifier(CLIENT_IMPORTS),
         undefined
       ),
       factory.createStringLiteral(CLIENT_PATH),
@@ -117,7 +118,7 @@ export function generateImports(): ts.ImportDeclaration[] {
   ];
 }
 
-export function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
+function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
   return factory.createClassDeclaration(
     undefined,
     [
@@ -159,7 +160,7 @@ function tsTypeFromAbiType(argType: string): ts.TypeNode {
   return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 }
 
-export function generateMethodImpl(method: ABIMethod): ts.ClassElement {
+function generateMethodImpl(method: ABIMethod): ts.ClassElement {
   const params: ts.ParameterDeclaration[] = [];
 
   const callArgs: ts.Expression[] = [];

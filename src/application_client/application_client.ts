@@ -3,18 +3,22 @@ import algosdk, {
   AtomicTransactionComposer,
   TransactionWithSigner,
 } from "algosdk";
-import { AppSpec, getStateSchema, Schema } from "./generate/appspec";
+import { AppSpec, getStateSchema, Schema } from "../generate/";
 import { parseLogicError, LogicError } from "./logic_error";
 
-export type MethodArgs = {
-  [key: string]:
+
+export type MethodArg = 
     | string
     | number
     | Uint8Array
     | algosdk.TransactionWithSigner
     | algosdk.Transaction;
+
+export type MethodArgs = {
+  [key: string]: MethodArg
 };
-export default class ApplicationClient {
+
+export class ApplicationClient {
   client: algosdk.Algodv2;
 
   appId: number;
