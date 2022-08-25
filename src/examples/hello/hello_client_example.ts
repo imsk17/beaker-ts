@@ -1,6 +1,6 @@
+import { getAccounts, getAlgodClient } from "../../sandbox/";
+
 import HelloBeaker from "./hellobeaker_client";
-import { getAccounts } from "./sandbox/accounts";
-import { getAlgodClient } from "./sandbox/clients";
 
 (async function () {
   const acct = (await getAccounts()).pop();

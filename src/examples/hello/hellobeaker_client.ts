@@ -1,6 +1,6 @@
 import algosdk from "algosdk";
-import ApplicationClient from "./application_client";
-import {Schema,Type} from "./generate/appspec";
+import {ApplicationClient} from "../../application_client/";
+import {Schema,AVMType} from "../../generate/";
 export default class HelloBeaker extends ApplicationClient {
     desc: string = "";
     appSchema: Schema = { declared: {}, dynamic: {} };

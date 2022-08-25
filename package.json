@@ -2,15 +2,23 @@
   "name": "beaker-ts",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./lib/index.js",
   "scripts": {
-    "gen": "npx ts-node src/gen.ts",
-    "try": "npx ts-node src/try.ts",
-    "amm": "npx ts-node src/amm_client_example.ts"
+    "gen": "npx ts-node src/generate.ts",
+    "hello": "npx ts-node src/examples/hello/hello_client_example.ts",
+    "build": "tsc -p .",
+    "local": "npm install -g  && beaker generate example_specs/hello.json src/",
+    "package":"npm pkg . --output beaker"
+  },
+  "bin": {
+    "generate": "./lib/generate.js"
+  },
+  "pkg": {
+   "scripts": "lib/**/*.js"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^18.6.4",
     "ts-node": "^10.9.1",
