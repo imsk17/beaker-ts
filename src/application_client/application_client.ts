@@ -1,23 +1,33 @@
-import algosdk, {
-  ABIArgument,
-  AtomicTransactionComposer,
-  TransactionWithSigner,
-} from "algosdk";
-import { AppSpec, getStateSchema, Schema } from "../generate/";
+import algosdk from "algosdk";
+
+import {Struct} from './structs'
+import { getStateSchema, Schema } from "../generate/";
 import { parseLogicError, LogicError } from "./logic_error";
 
-
-export type MethodArg = 
-    | string
-    | number
-    | Uint8Array
-    | algosdk.TransactionWithSigner
-    | algosdk.Transaction
-    | (number | string | Uint8Array)[];
+export type MethodArg = algosdk.ABIArgument | algosdk.Transaction | Struct | MethodArg[];
 
 export type MethodArgs = {
   [key: string]: MethodArg
 };
+
+export class ABIResult<Type> {
+  txID: string;
+  rawReturnValue: Uint8Array;
+  method: algosdk.ABIMethod;
+  returnValue?: Type;
+  decodeError?: Error;
+  txInfo?: Record<string, any>;
+
+  constructor(result: algosdk.ABIResult, returnVal: Type){
+    this.txID = result.txID;
+    this.rawReturnValue = result.rawReturnValue;
+    this.method = result.method;
+    this.decodeError = result.decodeError;
+    this.txInfo = result.txInfo;
+    this.returnValue = returnVal;
+  }
+}
+
 
 export class ApplicationClient {
   client: algosdk.Algodv2;
@@ -130,7 +140,7 @@ export class ApplicationClient {
     });
 
     try {
-      const result = await atc.execute(this.client, 4);
+      return await atc.execute(this.client, 4);
     } catch (e) {
       throw this.wrapLogicError(e);
     }
@@ -154,7 +164,7 @@ export class ApplicationClient {
     });
 
     try {
-      const result = await atc.execute(this.client, 4);
+      return await atc.execute(this.client, 4);
     } catch (e) {
       throw this.wrapLogicError(e);
     }
@@ -174,7 +184,7 @@ export class ApplicationClient {
     });
 
     try {
-      const result = await atc.execute(this.client, 4);
+      return await atc.execute(this.client, 4);
     } catch (e) {
       throw this.wrapLogicError(e);
     }
@@ -194,7 +204,7 @@ export class ApplicationClient {
     });
 
     try {
-      const result = await atc.execute(this.client, 4);
+      return await atc.execute(this.client, 4);
     } catch (e) {
       throw this.wrapLogicError(e);
     }
@@ -214,7 +224,7 @@ export class ApplicationClient {
     });
 
     try {
-      const result = await atc.execute(this.client, 4);
+      return await atc.execute(this.client, 4);
     } catch (e) {
       throw this.wrapLogicError(e);
     }
@@ -226,9 +236,9 @@ export class ApplicationClient {
     txParams?: algosdk.TransactionLike
   ): Promise<algosdk.ABIResult> {
     const sp = await this.client.getTransactionParams().do();
-    const atc = new AtomicTransactionComposer();
+    const atc = new algosdk.AtomicTransactionComposer();
 
-    const processedArgs: ABIArgument[] = [];
+    const processedArgs: algosdk.ABIArgument[] = [];
 
     for (const expected_arg of method.args) {
       if (!(expected_arg.name in args)) {
@@ -239,10 +249,14 @@ export class ApplicationClient {
       let arg = args[expected_arg.name];
 
       if (arg instanceof algosdk.Transaction) {
-        arg = { txn: arg, signer: this.signer };
+        arg = { txn: arg, signer: this.signer } as algosdk.TransactionWithSigner;
       }
 
-      processedArgs.push(arg);
+      if(arg instanceof Object){
+        arg = Object.values(arg)
+      }
+
+      processedArgs.push(arg as algosdk.ABIArgument);
     }
 
     atc.addMethodCall({
@@ -260,6 +274,7 @@ export class ApplicationClient {
     } catch (e) {
       throw this.wrapLogicError(e);
     }
+
   }
 
   async addMethodCall() {}

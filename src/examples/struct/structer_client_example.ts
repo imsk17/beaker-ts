@@ -1,5 +1,5 @@
 import { getAccounts, getAlgodClient } from "../../sandbox/";
-import Structer from "./structer_client";
+import {Order, Structer} from "./structer_client";
 
 (async function () {
   const acct = (await getAccounts()).pop();
@@ -15,6 +15,9 @@ import Structer from "./structer_client";
 
   await appClient.optIn()
 
-  const result = await appClient.place_order(1, {item: "cubes", quantity: 1});
+  const result = await appClient.place_order(1, {item: "cubes", quantity: 1} as Order);
   console.log(result.txID); 
+
+  const result2 = await appClient.increase_quantity(1);
+  console.log("Result: ", result2.returnValue); 
 })();
