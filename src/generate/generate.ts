@@ -241,7 +241,7 @@ function copySchemaObject(so: Schema): ts.Expression {
         factory.createObjectLiteralExpression([
           factory.createPropertyAssignment(
             factory.createIdentifier("type"),
-            factory.createIdentifier(`Type.${sv[1].type}`)
+            factory.createIdentifier(`AVMType.${sv[1].type}`)
           ),
           factory.createPropertyAssignment(
             factory.createIdentifier("key"),
@@ -267,7 +267,7 @@ function copySchemaObject(so: Schema): ts.Expression {
         factory.createObjectLiteralExpression([
           factory.createPropertyAssignment(
             factory.createIdentifier("type"),
-            factory.createIdentifier(sv[1].type.toString())
+            factory.createIdentifier(`AVMType.${sv[1].type.toString()}`)
           ),
           factory.createPropertyAssignment(
             factory.createIdentifier("desc"),
