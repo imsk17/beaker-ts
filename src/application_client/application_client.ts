@@ -12,7 +12,8 @@ export type MethodArg =
     | number
     | Uint8Array
     | algosdk.TransactionWithSigner
-    | algosdk.Transaction;
+    | algosdk.Transaction
+    | (number | string | Uint8Array)[];
 
 export type MethodArgs = {
   [key: string]: MethodArg

@@ -6,6 +6,7 @@
   "scripts": {
     "gen": "npx ts-node src/generate.ts",
     "hello": "npx ts-node src/examples/hello/hello_client_example.ts",
+    "structer": "npx ts-node src/examples/struct/structer_client_example.ts",
     "build": "tsc -p .",
     "local": "npm install -g  && beaker generate example_specs/hello.json src/",
     "package":"npm pkg . --output beaker"

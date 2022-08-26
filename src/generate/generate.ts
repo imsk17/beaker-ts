@@ -3,7 +3,9 @@ import {
   DeclaredSchemaValueSpec,
   DynamicSchemaValueSpec,
   HintSpec,
+  Hint,
   Schema,
+  Struct,
   SchemaSpec,
   AppSources,
 } from "./appspec";
@@ -52,6 +54,9 @@ export default function generateApplicationClient(appSpec: AppSpec, path: string
   const name = appSpec.contract.name;
 
   const nodes: ts.Node[] = generateImports();
+
+  const structNodes = generateStructTypes(appSpec);
+  nodes.push(...structNodes)
 
   const classNode = generateClass(appSpec);
   nodes.push(classNode);
@@ -137,7 +142,7 @@ function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
     ],
     [
       ...generateContractProperties(appSpec),
-      ...appSpec.contract.methods.map((meth) => generateMethodImpl(meth)),
+      ...appSpec.contract.methods.map((meth) => generateMethodImpl(meth, appSpec)),
     ]
   );
 }
@@ -160,12 +165,16 @@ function tsTypeFromAbiType(argType: string): ts.TypeNode {
   return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 }
 
-function generateMethodImpl(method: ABIMethod): ts.ClassElement {
+function generateMethodImpl(method: ABIMethod, spec: AppSpec): ts.ClassElement {
   const params: ts.ParameterDeclaration[] = [];
 
   const callArgs: ts.Expression[] = [];
 
   const abiMethodArgs: ts.PropertyAssignment[] = [];
+
+  let hint = {} as Hint
+  if(method.name in spec.hints)
+    hint = spec.hints[method.name]
 
   callArgs.push(
     factory.createCallExpression(
@@ -182,12 +191,29 @@ function generateMethodImpl(method: ABIMethod): ts.ClassElement {
   );
 
   for (const arg of method.args) {
-    abiMethodArgs.push(
-      factory.createPropertyAssignment(
-        factory.createIdentifier(arg.name),
-        factory.createIdentifier(arg.name)
-      )
-    );
+    let argType = tsTypeFromAbiType(arg.type.toString())
+    if(arg.name in hint.structs) {
+        // Its got a struct def, so we should specify the struct type in args and
+        // get the values when we call `call`
+        argType = factory.createTypeReferenceNode(hint.structs[arg.name].name)
+        abiMethodArgs.push(
+          factory.createPropertyAssignment(
+            factory.createIdentifier(arg.name),
+            factory.createCallExpression(
+              factory.createIdentifier("Object.values"),
+              undefined,
+              [factory.createIdentifier(arg.name)],
+            ) 
+          )
+        );
+    }else{
+      abiMethodArgs.push(
+        factory.createPropertyAssignment(
+          factory.createIdentifier(arg.name),
+          factory.createIdentifier(arg.name)
+        )
+      );
+    }
 
     const typeParams = factory.createParameterDeclaration(
       undefined,
@@ -195,38 +221,56 @@ function generateMethodImpl(method: ABIMethod): ts.ClassElement {
       undefined,
       arg.name,
       undefined,
-      tsTypeFromAbiType(arg.type.toString()),
+      argType,
       undefined
     );
 
     params.push(typeParams);
   }
 
+
   const body = factory.createBlock(
     [
       factory.createReturnStatement(
-        factory.createCallExpression(
-          factory.createPropertyAccessExpression(
-            factory.createThis(),
-            factory.createIdentifier("call")
-          ),
-          undefined,
-          [...callArgs, factory.createObjectLiteralExpression(abiMethodArgs)]
+        factory.createAwaitExpression(
+          factory.createCallExpression(
+            factory.createPropertyAccessExpression(
+              factory.createThis(),
+              factory.createIdentifier("call")
+            ),
+            undefined,
+            [...callArgs, factory.createObjectLiteralExpression(abiMethodArgs)]
+          )
         )
       ),
     ],
     true
   );
 
+  // Set up return type
+  let retType = undefined;
+  // TODO:
+  //if(method.returns.type.toString() !== "void"){
+  //  retType = tsTypeFromAbiType(method.returns.type.toString())
+  //  // Always `output` here because pyteal, but when others app specs come in we should consider them
+  //  if('output' in hint.structs){
+  //    retType = factory.createTypeReferenceNode(hint.structs['output'].name)
+  //  }
+  //  retType = factory.createTypeReferenceNode(
+  //      factory.createIdentifier("Promise"),
+  //      [retType]
+  //  )
+  //}
+
   const methodSpec = factory.createMethodDeclaration(
     undefined,
-    undefined,
+    [factory.createModifier(ts.SyntaxKind.AsyncKeyword)],
     undefined,
     method.name,
     undefined,
     undefined,
     params,
-    undefined,
+    retType,
     body
   );
 
@@ -274,8 +318,8 @@ function copySchemaObject(so: Schema): ts.Expression {
             factory.createStringLiteral(sv[1].desc ? sv[1].desc : "")
           ),
           factory.createPropertyAssignment(
-            factory.createIdentifier("maxKeys"),
-            factory.createNumericLiteral(sv[1].maxKeys)
+            factory.createIdentifier("max_keys"),
+            factory.createNumericLiteral(sv[1].max_keys?sv[1].max_keys:0)
           ),
         ])
       );
@@ -292,6 +336,49 @@ function copySchemaObject(so: Schema): ts.Expression {
       factory.createObjectLiteralExpression(dynamicAppSchemaProps)
     ),
   ]);
+}
+
+function generateStructTypes(spec: AppSpec): ts.Node[] {
+  const hints = spec.hints
+
+  const structs = {}
+  for(const k of Object.keys(hints)){
+    const hint = hints[k]
+    if(hint.structs !== undefined){
+      for(const sk of Object.keys(hint.structs)){
+        const struct = hint.structs[sk]
+        if(!(struct.name in struct)){
+          structs[struct.name] = generateStruct(struct)
+        }
+      }
+    }
+  }
+
+  return Object.values(structs)
+}
+
+function generateStruct(s: Struct): ts.TypeAliasDeclaration {
+  const members: ts.TypeElement[] = []
+
+  for(const elem of s.elements){
+    members.push(
+      factory.createPropertySignature(
+        undefined,
+        factory.createIdentifier(elem[0]),
+        undefined,
+        tsTypeFromAbiType(elem[1])
+      )
+    )
+  }
+
+  return factory.createTypeAliasDeclaration(
+    undefined,
+    undefined,
+    factory.createIdentifier(s.name),
+    undefined,
+    factory.createTypeLiteralNode(members)
+  )
+
 }
 
 function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {

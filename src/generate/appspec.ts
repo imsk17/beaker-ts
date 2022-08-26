@@ -5,7 +5,25 @@ export enum AVMType {
   bytes,
 }
 
-export interface HintSpec {}
+type StructElement = [string, string]
+export interface Struct {
+  name: string,
+  elements: StructElement[]
+}
+
+export interface Hint {
+  structs: {
+    [key: string]: Struct
+  }
+  readonly: boolean
+  param_annotations: {
+    [key: string]: any
+  }
+}
+
+export interface HintSpec {
+  [key: string]:  Hint
+}
 
 export interface DeclaredSchemaValueSpec {
   type: AVMType;
@@ -17,7 +35,7 @@ export interface DeclaredSchemaValueSpec {
 export interface DynamicSchemaValueSpec {
   type: AVMType;
   desc: string;
-  maxKeys: number;
+  max_keys: number;
 }
 
 export interface Schema {
@@ -44,8 +62,8 @@ export function getStateSchema(s: Schema): StateSchema {
   }
 
   for (const item of Object.entries(s.dynamic)) {
-    if (item[1].type == AVMType.bytes) bytes += item[1].maxKeys;
-    if (item[1].type == AVMType.uint64) uints += item[1].maxKeys;
+    if (item[1].type == AVMType.bytes) bytes += item[1].max_keys;
+    if (item[1].type == AVMType.uint64) uints += item[1].max_keys;
   }
 
   return { uints: uints, bytes: bytes };
