@@ -191,7 +191,7 @@ function generateMethodImpl(method: ABIMethod, spec: AppSpec): ts.ClassElement {
 
   for (const arg of method.args) {
     let argType
-    if(arg.name in hint.structs) {
+    if(hint.structs !== undefined && arg.name in hint.structs) {
         // Its got a struct def, so we should specify the struct type in args and
         // get the values when we call `call`
         argType = factory.createTypeReferenceNode(hint.structs[arg.name].name)
@@ -232,7 +232,7 @@ function generateMethodImpl(method: ABIMethod, spec: AppSpec): ts.ClassElement {
     abiRetType = tsTypeFromAbiType(method.returns.type.toString())
     // Always `output` here because pyteal, 
     // when others app specs come in we should consider them
-    if('output' in hint.structs){
+    if(hint.structs !== undefined && 'output' in hint.structs){
       abiRetType = factory.createTypeReferenceNode(hint.structs['output'].name)
       resultArgs.push(
         factory.createAsExpression(
