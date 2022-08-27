@@ -1,31 +1,43 @@
-import algosdk from "algosdk";
+import algosdk, { ABIValue } from "algosdk";
 
-import {Struct} from './structs'
 import { getStateSchema, Schema } from "../generate/";
 import { parseLogicError, LogicError } from "./logic_error";
 
-export type MethodArg = algosdk.ABIArgument | algosdk.Transaction | Struct | MethodArg[];
+export type MethodArg = algosdk.ABIArgument | algosdk.Transaction | object | MethodArg[];
 
 export type MethodArgs = {
   [key: string]: MethodArg
 };
 
-export class ABIResult<Type> {
+export type ABIReturnType = object | void | algosdk.ABIValue
+
+export function decodeNamedTuple(v: ABIValue, keys: string[]): object {
+  if(!Array.isArray(v)) throw Error("Expected array")
+  if(v.length != keys.length) throw Error("Different key length than value length")
+
+  return Object.fromEntries(keys.map((key, idx)=>{ return [key, v[idx]]}))
+}
+
+export class ABIResult<T extends ABIReturnType> {
   txID: string;
   rawReturnValue: Uint8Array;
   method: algosdk.ABIMethod;
-  returnValue?: Type;
+  returnValue: ABIValue;
   decodeError?: Error;
   txInfo?: Record<string, any>;
 
-  constructor(result: algosdk.ABIResult, returnVal: Type){
+  value: T;
+
+  constructor(result: algosdk.ABIResult, value?: T){
     this.txID = result.txID;
     this.rawReturnValue = result.rawReturnValue;
     this.method = result.method;
     this.decodeError = result.decodeError;
     this.txInfo = result.txInfo;
-    this.returnValue = returnVal;
+    this.returnValue = result.returnValue
+    this.value = value 
   }
+
 }
 
 

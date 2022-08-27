@@ -1,5 +1,4 @@
-import {ApplicationClient, ABIResult, MethodArg, MethodArgs}  from "./application_client";
-import {Struct} from './structs';
+import {ApplicationClient, ABIResult, MethodArg, MethodArgs, decodeNamedTuple}  from "./application_client";
 import { LogicError } from "./logic_error";
 
 export {
@@ -7,6 +6,6 @@ export {
     MethodArg,
     MethodArgs,
     LogicError,
-    Struct ,
-    ABIResult
+    ABIResult,
+    decodeNamedTuple,
 }
