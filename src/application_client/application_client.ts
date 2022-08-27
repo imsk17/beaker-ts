@@ -1,4 +1,4 @@
-import algosdk, { ABIValue } from "algosdk";
+import algosdk, { ABIValue, SuggestedParams, TransactionParams } from "algosdk";
 
 import { getStateSchema, Schema } from "../generate/";
 import { parseLogicError, LogicError } from "./logic_error";
@@ -105,10 +105,10 @@ export class ApplicationClient {
     }
   }
 
-  async create(): Promise<[number, string, string]> {
+  async create(txParams?: algosdk.TransactionParams): Promise<[number, string, string]> {
     await this.ensurePrograms();
 
-    const sp = await this.client.getTransactionParams().do();
+    const sp = await this.getSuggestedParams(txParams);
 
     const atc = new algosdk.AtomicTransactionComposer();
     atc.addTransaction({
@@ -120,6 +120,7 @@ export class ApplicationClient {
         clearProgram: this.clearProgramBinary,
         ...this.getGlobalSchema(),
         ...this.getLocalSchema(),
+        ...txParams,
       }),
       signer: this.signer,
     });
@@ -137,8 +138,8 @@ export class ApplicationClient {
     }
   }
 
-  async delete() {
-    const sp = await this.client.getTransactionParams().do();
+  async delete(txParams?: algosdk.TransactionParams) {
+    const sp = await this.getSuggestedParams(txParams);
 
     const atc = new algosdk.AtomicTransactionComposer();
     atc.addTransaction({
@@ -147,6 +148,7 @@ export class ApplicationClient {
         suggestedParams: sp,
         onComplete: algosdk.OnApplicationComplete.DeleteApplicationOC,
         appIndex: this.appId,
+        ...txParams,
       }),
       signer: this.signer,
     });
@@ -158,10 +160,10 @@ export class ApplicationClient {
     }
   }
 
-  async update() {
+  async update(txParams?: algosdk.TransactionParams) {
     await this.ensurePrograms();
 
-    const sp = await this.client.getTransactionParams().do();
+    const sp = await this.getSuggestedParams(txParams)
 
     const atc = new algosdk.AtomicTransactionComposer();
     atc.addTransaction({
@@ -171,6 +173,7 @@ export class ApplicationClient {
         approvalProgram: this.approvalProgramBinary,
         clearProgram: this.clearProgramBinary,
         appIndex: this.appId,
+        ...txParams,
       }),
       signer: this.signer,
     });
@@ -182,8 +185,8 @@ export class ApplicationClient {
     }
   }
 
-  async optIn() {
-    const sp = await this.client.getTransactionParams().do();
+  async optIn(txParams?: algosdk.TransactionParams) {
+    const sp = await this.getSuggestedParams(txParams);
 
     const atc = new algosdk.AtomicTransactionComposer();
     atc.addTransaction({
@@ -191,6 +194,7 @@ export class ApplicationClient {
         from: this.getSender(),
         suggestedParams: sp,
         appIndex: this.appId,
+        ...txParams,
       }),
       signer: this.signer,
     });
@@ -202,8 +206,8 @@ export class ApplicationClient {
     }
   }
 
-  async closeOut() {
-    const sp = await this.client.getTransactionParams().do();
+  async closeOut(txParams?: algosdk.TransactionParams) {
+    const sp = await this.getSuggestedParams(txParams);
 
     const atc = new algosdk.AtomicTransactionComposer();
     atc.addTransaction({
@@ -211,6 +215,7 @@ export class ApplicationClient {
         from: this.getSender(),
         suggestedParams: sp,
         appIndex: this.appId,
+        ...txParams,
       }),
       signer: this.signer,
     });
@@ -222,8 +227,8 @@ export class ApplicationClient {
     }
   }
 
-  async clearState() {
-    const sp = await this.client.getTransactionParams().do();
+  async clearState(txParams?: algosdk.TransactionParams) {
+    const sp = await this.getSuggestedParams(txParams);
 
     const atc = new algosdk.AtomicTransactionComposer();
     atc.addTransaction({
@@ -245,14 +250,33 @@ export class ApplicationClient {
   async call(
     method: algosdk.ABIMethod,
     args?: MethodArgs,
-    txParams?: algosdk.TransactionLike
+    txParams?: algosdk.TransactionParams
   ): Promise<algosdk.ABIResult> {
-    const sp = await this.client.getTransactionParams().do();
+
     const atc = new algosdk.AtomicTransactionComposer();
 
-    const processedArgs: algosdk.ABIArgument[] = [];
+    await this.addMethodCall(atc, method, args, txParams)
 
+    try {
+      return (await atc.execute(this.client, 4)).methodResults.pop();
+    } catch (e) {
+      throw this.wrapLogicError(e);
+    }
+
+  }
+
+  async addMethodCall(
+    atc: algosdk.AtomicTransactionComposer,
+    method: algosdk.ABIMethod,
+    args?: MethodArgs,
+    txParams?: algosdk.TransactionParams
+  ): Promise<algosdk.AtomicTransactionComposer> {
+
+    const sp = await this.getSuggestedParams(txParams);
+
+    const processedArgs: algosdk.ABIArgument[] = [];
     for (const expected_arg of method.args) {
+
       if (!(expected_arg.name in args)) {
         // Error! (or check hints)
         throw new Error(`Cant find required argument: ${expected_arg.name}`);
@@ -281,15 +305,8 @@ export class ApplicationClient {
       ...txParams,
     });
 
-    try {
-      return (await atc.execute(this.client, 4)).methodResults.pop();
-    } catch (e) {
-      throw this.wrapLogicError(e);
-    }
-
+    return atc
   }
-
-  async addMethodCall() {}
 
   wrapLogicError(e: Error): Error {
     const led = parseLogicError(e.message);
@@ -300,6 +317,11 @@ export class ApplicationClient {
         this.approvalProgramMap
       );
     else return e;
+  }
+
+  async getSuggestedParams(txParams?: algosdk.TransactionParams): Promise<algosdk.SuggestedParams> {
+    if(txParams !== undefined && txParams.suggestedParams !== undefined)  return txParams.suggestedParams
+    return await this.client.getTransactionParams().do();
   }
 
   private getSender(): string {
@@ -321,4 +343,5 @@ export class ApplicationClient {
     const s = getStateSchema(this.appSchema);
     return { numGlobalInts: s.uints, numGlobalByteSlices: s.bytes };
   }
+
 }
