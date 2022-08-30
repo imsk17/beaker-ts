@@ -1,7 +1,7 @@
 import algosdk from "algosdk";
-import {ApplicationClient} from "../../application_client/";
+import {ApplicationClient, ABIResult, decodeNamedTuple} from "../../application_client/";
 import {Schema,AVMType} from "../../generate/";
-export default class HelloBeaker extends ApplicationClient {
+export class HelloBeaker extends ApplicationClient {
     desc: string = "";
     appSchema: Schema = { declared: {}, dynamic: {} };
     acctSchema: Schema = { declared: {}, dynamic: {} };
@@ -10,7 +10,8 @@ export default class HelloBeaker extends ApplicationClient {
     methods: algosdk.ABIMethod[] = [
         new algosdk.ABIMethod({ name: "hello", desc: "", args: [{ type: "string", name: "name", desc: "" }], returns: { type: "string", desc: "" } })
     ];
-    hello(name: string) {
-        return this.call(algosdk.getMethodByName(this.methods, "hello"), { name: name });
+    async hello(name: string): Promise<ABIResult<string>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "hello"), { name: name });
+        return new ABIResult<string>(result);
     }
 }

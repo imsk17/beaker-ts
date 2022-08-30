@@ -15,7 +15,7 @@ import {Order, Structer} from "./structer_client";
 
   await appClient.optIn()
 
-  const result = await appClient.place_order(1, {item: "cubes", quantity: 1} as Order);
+  const result = await appClient.place_order(1, {item: "cubes", quantity: 1});
   console.log(result.txID); 
 
   const result2 = await appClient.increase_quantity(1);
