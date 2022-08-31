@@ -4,11 +4,12 @@ export class Order {
     item: string;
     quantity: number;
     static codec: algosdk.ABIType = algosdk.ABIType.from("(string,uint16)");
+    static fields: string[] = ["item", "quantity"];
     static decodeResult(val: algosdk.ABIValue): Order {
-        return decodeNamedTuple(val, ["item", "quantity"]) as Order;
+        return decodeNamedTuple(val, Order.fields) as Order;
     }
     static decodeBytes(val: Uint8Array): Order {
-        return decodeNamedTuple(Order.codec.decode(val), ["item", "quantity"]) as Order;
+        return decodeNamedTuple(Order.codec.decode(val), Order.fields) as Order;
     }
 }
 export class Structer extends ApplicationClient {

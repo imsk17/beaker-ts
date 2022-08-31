@@ -227,7 +227,12 @@ function generateMethodImpl(method: ABIMethod, spec: AppSpec): ts.ClassElement {
               factory.createIdentifier('decodeResult')
             ),
             undefined,
-            [factory.createIdentifier("result.returnValue")]
+            [
+              factory.createPropertyAccessExpression(
+                factory.createIdentifier("result"),
+                factory.createIdentifier("returnValue"),
+              )
+            ]
           ),
       )
     }
@@ -418,8 +423,19 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
         )
     )
   )
+  members.push(factory.createPropertyDeclaration(
+    undefined,
+    [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
+    factory.createIdentifier("fields"),
+    undefined,
+    factory.createTypeReferenceNode("string[]"),
+    factory.createArrayLiteralExpression(
+      tupleNames.map((name)=>{ return factory.createStringLiteral(name) })
+    )
+  ))
 
   members.push(
+    // Add static `decodeResult(val: ABIValue): <T>` method
     factory.createMethodDeclaration(
         undefined,
         [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
@@ -453,10 +469,10 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
               undefined,
               [
                 factory.createIdentifier("val"),
-                factory.createArrayLiteralExpression(
-                  tupleNames.map((name)=>{ return factory.createStringLiteral(name) }),
-                  false
-                )
+                factory.createPropertyAccessExpression(
+                  factory.createIdentifier(s.name),
+                  factory.createIdentifier("fields")
+                ),
               ]
             ),
             factory.createTypeReferenceNode(
@@ -507,10 +523,10 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
                   undefined,
                   [factory.createIdentifier("val")]
                 ),
-                factory.createArrayLiteralExpression(
-                  tupleNames.map((name)=>{ return factory.createStringLiteral(name) }),
-                  false
-                )
+                factory.createPropertyAccessExpression(
+                  factory.createIdentifier(s.name),
+                  factory.createIdentifier("fields")
+                ),
               ]
             ),
             factory.createTypeReferenceNode(
