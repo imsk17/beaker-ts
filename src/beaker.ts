@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env ts-node
 
 import { Command } from "commander";
 import { generateApplicationClient, AppSpec } from ".";
@@ -17,21 +17,27 @@ program
 
 program
   .command("generate")
+  .description("Generates an application client given an application spec")
   .argument("<string>", "path to json application spec file")
-  .option("--src", "path where generated client should be written", "src/")
-  .action((spec, options) => {
-    let srcPath = options.src;
+  .argument("<string>", "path where generated client should be written")
+  .action((specPath, srcPath) => {
+
     if (srcPath.slice(-1) !== path.sep) srcPath += path.sep;
+
     if (!fs.lstatSync(srcPath).isDirectory()) {
       throw Error("Path argument must be a directory");
     }
 
-    if (!fs.lstatSync(spec).isFile()) {
+    if (!fs.lstatSync(specPath).isFile()) {
       throw Error("Path to spec must be a file");
     }
 
+    console.log(srcPath)
+
     generateApplicationClient(
-      JSON.parse(fs.readFileSync(spec).toString()),
+      JSON.parse(fs.readFileSync(specPath).toString()),
       srcPath
     );
   });
+
+program.parse()
