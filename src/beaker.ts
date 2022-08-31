@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env node
 
 import { Command } from "commander";
 import { generateApplicationClient, AppSpec } from ".";
@@ -32,12 +32,13 @@ program
       throw Error("Path to spec must be a file");
     }
 
-    console.log(srcPath)
+    console.log(`Writing client to: ${srcPath}`)
 
     generateApplicationClient(
       JSON.parse(fs.readFileSync(specPath).toString()),
       srcPath
     );
+
   });
 
 program.parse()
