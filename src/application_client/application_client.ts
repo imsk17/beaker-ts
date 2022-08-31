@@ -2,6 +2,7 @@ import algosdk, { ABIValue, SuggestedParams, TransactionParams } from "algosdk";
 
 import { getStateSchema, Schema } from "../";
 import { parseLogicError, LogicError } from "./logic_error";
+import { ApplicationState, AccountState, decodeState } from "./state"
 
 export type MethodArg = algosdk.ABIArgument | algosdk.Transaction | object | MethodArg[];
 
@@ -323,6 +324,21 @@ export class ApplicationClient {
     if(txParams !== undefined && txParams.suggestedParams !== undefined)  return txParams.suggestedParams
     return await this.client.getTransactionParams().do();
   }
+
+
+  async getApplicationState(raw?: boolean): Promise<ApplicationState> {
+    const appInfo = await this.client.getApplicationByID(this.appId).do()
+    if (!('params' in appInfo) || !('global-state' in appInfo['params'])) throw Error("No global state found")
+    return decodeState(appInfo['params']['global-state'], raw) as ApplicationState
+  }
+
+  async getAccountState(address?: string, raw?: boolean): Promise<AccountState> {
+    if(address === undefined) address = this.getSender()
+    const acctInfo = await this.client.accountApplicationInformation(address, this.appId).do()
+    if (!('app-local-state' in acctInfo) || !('key-value' in acctInfo['app-local-state'])) throw Error("No global state found")
+    return decodeState(acctInfo['app-local-state']['key-value'], raw) as ApplicationState
+  }
+
 
   private getSender(): string {
     return this.sender;

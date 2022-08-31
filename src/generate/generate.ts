@@ -18,6 +18,7 @@ import { writeFileSync } from "fs";
 // https://ts-ast-viewer.com/#
 
 const CLIENT_NAME = "ApplicationClient";
+// TODO: only import if we _need_ them
 const CLIENT_IMPORTS = `{${CLIENT_NAME}, ABIResult, decodeNamedTuple, Schema, AVMType}` 
 const CLIENT_PATH = "beaker-ts";
 

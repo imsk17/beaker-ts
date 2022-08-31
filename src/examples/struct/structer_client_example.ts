@@ -20,4 +20,8 @@ import {Order, Structer} from "./structer_client";
 
   const result2 = await appClient.increase_quantity(1);
   console.log("Result: ", result2.value); 
+
+
+  console.log(await appClient.getAccountState(acct.addr))
+  
 })();
