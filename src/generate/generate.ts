@@ -375,26 +375,167 @@ function generateStructTypes(spec: AppSpec): ts.Node[] {
   return Object.values(structs)
 }
 
-function generateStruct(s: Struct): ts.TypeAliasDeclaration {
-  const members: ts.TypeElement[] = []
+function generateStruct(s: Struct): ts.ClassDeclaration {
+  const members: ts.ClassElement[] = []
+  const tupleTypes: string[] = [];
+  const tupleNames: string[] = [];
 
   for(const elem of s.elements){
+    tupleNames.push(elem[0])
+    tupleTypes.push(elem[1])
+
     members.push(
-      factory.createPropertySignature(
+      factory.createPropertyDeclaration(
+        undefined,
         undefined,
         factory.createIdentifier(elem[0]),
         undefined,
-        tsTypeFromAbiType(elem[1])
+        tsTypeFromAbiType(elem[1]),
+        undefined,
       )
     )
   }
 
-  return factory.createTypeAliasDeclaration(
+  members.push(
+    factory.createPropertyDeclaration(
+        undefined,
+        [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
+        factory.createIdentifier("codec"),
+        undefined,
+        factory.createTypeReferenceNode(
+          factory.createQualifiedName(
+            factory.createIdentifier("algosdk"),
+            factory.createIdentifier("ABIType")
+          ),
+          undefined
+        ),
+        factory.createCallExpression(
+          factory.createPropertyAccessExpression(
+            factory.createPropertyAccessExpression(
+              factory.createIdentifier("algosdk"),
+              factory.createIdentifier("ABIType")
+            ),
+            factory.createIdentifier("from")
+          ),
+          undefined,
+          [factory.createStringLiteral(`(${tupleTypes.join(",")})`)]
+        )
+    )
+  )
+
+  members.push(
+    factory.createMethodDeclaration(
+        undefined,
+        [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
+        undefined,
+        factory.createIdentifier("decodeResult"),
+        undefined,
+        undefined,
+        [factory.createParameterDeclaration(
+          undefined,
+          undefined,
+          undefined,
+          factory.createIdentifier("val"),
+          undefined,
+          factory.createTypeReferenceNode(
+            factory.createQualifiedName(
+              factory.createIdentifier("algosdk"),
+              factory.createIdentifier("ABIValue")
+            ),
+            undefined
+          ),
+          undefined
+        )],
+        factory.createTypeReferenceNode(
+          factory.createIdentifier(s.name),
+          undefined
+        ),
+        factory.createBlock(
+          [factory.createReturnStatement(factory.createAsExpression(
+            factory.createCallExpression(
+              factory.createIdentifier("decodeNamedTuple"),
+              undefined,
+              [
+                factory.createIdentifier("val"),
+                factory.createArrayLiteralExpression(
+                  tupleNames.map((name)=>{ return factory.createStringLiteral(name) }),
+                  false
+                )
+              ]
+            ),
+            factory.createTypeReferenceNode(
+              factory.createIdentifier(s.name),
+              undefined
+            )
+          ))],
+          true
+        )
+      )
+    )
+
+    members.push(
+      factory.createMethodDeclaration(
+        undefined,
+        [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
+        undefined,
+        factory.createIdentifier("decodeBytes"),
+        undefined, undefined,
+        [factory.createParameterDeclaration(
+          undefined, undefined, undefined,
+          factory.createIdentifier("val"),
+          undefined,
+          factory.createTypeReferenceNode(
+            factory.createIdentifier("Uint8Array"),
+            undefined
+          ),
+          undefined
+        )],
+        factory.createTypeReferenceNode(
+          factory.createIdentifier(s.name),
+          undefined
+        ),
+        factory.createBlock(
+          [factory.createReturnStatement(factory.createAsExpression(
+            factory.createCallExpression(
+              factory.createIdentifier("decodeNamedTuple"),
+              undefined,
+              [
+                factory.createCallExpression(
+                  factory.createPropertyAccessExpression(
+                    factory.createPropertyAccessExpression(
+                      factory.createIdentifier(s.name),
+                      factory.createIdentifier("codec")
+                    ),
+                    factory.createIdentifier("decode")
+                  ),
+                  undefined,
+                  [factory.createIdentifier("val")]
+                ),
+                factory.createArrayLiteralExpression(
+                  tupleNames.map((name)=>{ return factory.createStringLiteral(name) }),
+                  false
+                )
+              ]
+            ),
+            factory.createTypeReferenceNode(
+              factory.createIdentifier(s.name),
+              undefined
+            )
+          ))],
+          true
+        )
+      )
+    )
+
+
+
+  return factory.createClassDeclaration(
     undefined,
     [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     factory.createIdentifier(s.name),
     undefined,
-    factory.createTypeLiteralNode(members)
+    undefined,
+    members
   )
 
 }

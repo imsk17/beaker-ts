@@ -1,6 +1,5 @@
-import algosdk from 'algosdk'
 import { isUint8Array } from 'util/types';
-import { decodeNamedTuple, getAccounts, getAlgodClient } from "../../";
+import { getAccounts, getAlgodClient } from "../../";
 import {Order, Structer} from "./structer_client";
 
 (async function () {
@@ -22,7 +21,6 @@ import {Order, Structer} from "./structer_client";
 
   const result2 = await appClient.increase_quantity(1);
   console.log("Result: ", result2.value); 
-
 
   const state = await appClient.getAccountState(acct.addr, true)
   for(const k in state){
