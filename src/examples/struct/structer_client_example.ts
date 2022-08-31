@@ -21,12 +21,14 @@ import {Order, Structer} from "./structer_client";
 
   const result2 = await appClient.increase_quantity(1);
   console.log("Result: ", result2.value); 
+  console.log("Or: ", Order.decodeResult(result2.returnValue));
 
   const state = await appClient.getAccountState(acct.addr, true)
   for(const k in state){
-    const val = state[k]
     // appease ts 
+    const val = state[k]
     if (!isUint8Array(val)) continue;
+
     console.log(Order.decodeBytes(val));
   }
 
