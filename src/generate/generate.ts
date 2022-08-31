@@ -119,15 +119,13 @@ function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
 }
 
 function tsTypeFromAbiType(argType: string | algosdk.ABIType): ts.TypeNode {
-  if (typeof argType === "string") {
-    if (TXN_TYPES.includes(argType))
+  if (typeof argType === "string" && TXN_TYPES.includes(argType))
       return factory.createUnionTypeNode([
         factory.createTypeReferenceNode("algosdk.TransactionWithSigner"),
         factory.createTypeReferenceNode("algosdk.Transaction"),
       ]);
-  }
 
-  // Might be a transaction
+
   const abiType =
     typeof argType == "string" ? algosdk.ABIType.from(argType) : argType;
   switch (abiType.constructor) {
