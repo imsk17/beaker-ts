@@ -10,7 +10,7 @@ import {
   AppSources,
 } from "./appspec";
 
-import algosdk, { ABIMethod } from "algosdk";
+import algosdk, { abiCheckTransactionType, ABIMethod } from "algosdk";
 import ts, { factory, NodeFactory } from "typescript";
 import { writeFileSync } from "fs";
 
@@ -24,19 +24,6 @@ const CLIENT_PATH = "beaker-ts";
 
 const ALGOSDK_IMPORTS = "algosdk";
 const ALGOSDK_PATH = "algosdk";
-
-const NUMBER_TYPES: string[] = [
-  "uint8",
-  "uint16",
-  "uint32",
-  "uint64",
-  "uint128",
-  "uint256",
-  "asset",
-  "app",
-];
-
-const STRING_TYPES: string[] = ["account", "address", "string"];
 
 const TXN_TYPES: string[] = [
   "txn",
@@ -132,20 +119,41 @@ function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
   );
 }
 
-function tsTypeFromAbiType(argType: string): ts.TypeNode {
-  if (NUMBER_TYPES.includes(argType))
-    return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
+function tsTypeFromAbiType(argType: string | algosdk.ABIType): ts.TypeNode {
 
-  if (STRING_TYPES.includes(argType))
-    return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-
-  if (TXN_TYPES.includes(argType)) {
-    const acceptableTxns: ts.TypeNode[] = [
+  if (typeof argType ==='string' ) {
+    if (TXN_TYPES.includes(argType)) return factory.createUnionTypeNode([
       factory.createTypeReferenceNode("algosdk.TransactionWithSigner"),
       factory.createTypeReferenceNode("algosdk.Transaction"),
-    ];
-    return factory.createUnionTypeNode(acceptableTxns);
+    ]);
   }
+
+  try {
+    // Might be a transaction
+    const abiType = (typeof argType == 'string')?algosdk.ABIType.from(argType):argType
+    switch(abiType.constructor) {
+      case algosdk.ABIByteType:
+        return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
+      case algosdk.ABIUintType:
+      case algosdk.ABIUfixedType:
+        return factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword);
+      case algosdk.ABIAddressType:
+      case algosdk.ABIStringType:
+        return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+      case algosdk.ABIBoolType:
+        return factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+      case algosdk.ABIArrayStaticType:
+      case algosdk.ABIArrayDynamicType:
+        return factory.createArrayTypeNode(tsTypeFromAbiType((abiType as algosdk.ABIArrayStaticType).childType)) 
+      case algosdk.ABITupleType:
+        return factory.createTupleTypeNode([
+          factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
+          factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
+        ])
+    }
+
+  }catch{}
+
 
   return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 }

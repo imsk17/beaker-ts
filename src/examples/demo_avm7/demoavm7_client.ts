@@ -1,14 +1,30 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../../";
-export type BlockDetails = {
-    ts: number;
-    seed: any;
-};
-export type JsonExampleResult = {
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
+export class BlockDetails {
+    ts: bigint;
+    seed: number[];
+    static codec: algosdk.ABIType = algosdk.ABIType.from("(uint64,byte[32])");
+    static fields: string[] = ["ts", "seed"];
+    static decodeResult(val: algosdk.ABIValue): BlockDetails {
+        return decodeNamedTuple(val, BlockDetails.fields) as BlockDetails;
+    }
+    static decodeBytes(val: Uint8Array): BlockDetails {
+        return decodeNamedTuple(BlockDetails.codec.decode(val), BlockDetails.fields) as BlockDetails;
+    }
+}
+export class JsonExampleResult {
     string_key: string;
-    uint_key: number;
+    uint_key: bigint;
     obj_key: string;
-};
+    static codec: algosdk.ABIType = algosdk.ABIType.from("(string,uint64,string)");
+    static fields: string[] = ["string_key", "uint_key", "obj_key"];
+    static decodeResult(val: algosdk.ABIValue): JsonExampleResult {
+        return decodeNamedTuple(val, JsonExampleResult.fields) as JsonExampleResult;
+    }
+    static decodeBytes(val: Uint8Array): JsonExampleResult {
+        return decodeNamedTuple(JsonExampleResult.codec.decode(val), JsonExampleResult.fields) as JsonExampleResult;
+    }
+}
 export class DemoAVM7 extends ApplicationClient {
     desc: string = "";
     appSchema: Schema = { declared: {}, dynamic: {} };
@@ -25,25 +41,25 @@ export class DemoAVM7 extends ApplicationClient {
         new algosdk.ABIMethod({ name: "json_ref", desc: "", args: [{ type: "string", name: "json_str", desc: "" }], returns: { type: "(string,uint64,string)", desc: "" } }),
         new algosdk.ABIMethod({ name: "vrf_verify", desc: "", args: [{ type: "byte[]", name: "msg", desc: "" }, { type: "byte[80]", name: "proof", desc: "" }, { type: "address", name: "pub_key", desc: "" }], returns: { type: "byte[64]", desc: "" } })
     ];
-    async replace(orig: string, start: number, replace_with: string): Promise<ABIResult<string>> {
+    async replace(orig: string, start: bigint, replace_with: string): Promise<ABIResult<string>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "replace"), { orig: orig, start: start, replace_with: replace_with });
         return new ABIResult<string>(result);
     }
-    async sha3_256(to_hash: string): Promise<ABIResult<any>> {
+    async sha3_256(to_hash: string): Promise<ABIResult<number[]>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "sha3_256"), { to_hash: to_hash });
-        return new ABIResult<any>(result);
+        return new ABIResult<number[]>(result);
     }
     async noop(): Promise<ABIResult<void>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "noop"), {});
         return new ABIResult<void>(result);
     }
-    async block(round: number): Promise<ABIResult<BlockDetails>> {
+    async block(round: bigint): Promise<ABIResult<BlockDetails>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "block"), { round: round });
-        return new ABIResult<BlockDetails>(result, decodeNamedTuple(result.returnValue, ["ts", "seed"]) as BlockDetails);
+        return new ABIResult<BlockDetails>(result, BlockDetails.decodeResult(result.returnValue));
     }
-    async ed25519verify_bare(msg: string, sig: any): Promise<ABIResult<any>> {
+    async ed25519verify_bare(msg: string, sig: number[]): Promise<ABIResult<boolean>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "ed25519verify_bare"), { msg: msg, sig: sig });
-        return new ABIResult<any>(result);
+        return new ABIResult<boolean>(result);
     }
     async b64decode(b64encoded: string): Promise<ABIResult<string>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "b64decode"), { b64encoded: b64encoded });
@@ -51,10 +67,10 @@ export class DemoAVM7 extends ApplicationClient {
     }
     async json_ref(json_str: string): Promise<ABIResult<JsonExampleResult>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "json_ref"), { json_str: json_str });
-        return new ABIResult<JsonExampleResult>(result, decodeNamedTuple(result.returnValue, ["string_key", "uint_key", "obj_key"]) as JsonExampleResult);
+        return new ABIResult<JsonExampleResult>(result, JsonExampleResult.decodeResult(result.returnValue));
     }
-    async vrf_verify(msg: any, proof: any, pub_key: string): Promise<ABIResult<any>> {
+    async vrf_verify(msg: number[], proof: number[], pub_key: string): Promise<ABIResult<number[]>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "vrf_verify"), { msg: msg, proof: proof, pub_key: pub_key });
-        return new ABIResult<any>(result);
+        return new ABIResult<number[]>(result);
     }
 }

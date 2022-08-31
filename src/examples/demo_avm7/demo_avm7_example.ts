@@ -21,6 +21,6 @@ import {DemoAVM7} from "./demoavm7_client";
   console.log(json_ref_result.value); 
 
   const sp = await appClient.client.getTransactionParams().do()
-  const block_result = await appClient.block(sp.firstRound-1)
+  const block_result = await appClient.block(BigInt(sp.firstRound-1))
   console.log(block_result.value)
 })();
