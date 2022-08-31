@@ -16,7 +16,7 @@ interface StateValue {
 
 // Generic object to hold state keys/values
 interface State {
-   [key: string] : string | number
+   [key: string] : string | number | Uint8Array
 }
 
 function strOrHex(v: Buffer): string {
@@ -44,7 +44,7 @@ export function decodeState(state: StateValue[], raw?:boolean): State {
         switch(dataTypeFlag){
             case 1:
                 const valBuff = Buffer.from(value.bytes, 'base64')
-                obj[key] = raw?valBuff.toString('hex'):strOrHex(valBuff) 
+                obj[key] = raw?new Uint8Array(valBuff):strOrHex(valBuff) 
                 break;
             case 2:
                 obj[key] = value.uint

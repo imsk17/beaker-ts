@@ -1,4 +1,5 @@
 import algosdk from 'algosdk'
+import { isUint8Array } from 'util/types';
 import { decodeNamedTuple, getAccounts, getAlgodClient } from "../../";
 import {Order, Structer} from "./structer_client";
 
@@ -23,15 +24,12 @@ import {Order, Structer} from "./structer_client";
   console.log("Result: ", result2.value); 
 
 
-  // TODO: can we make this obvious?
-  // Try to decode the state value from the known tuple type
-  const codec = algosdk.ABIType.from("(string,uint16)")
   const state = await appClient.getAccountState(acct.addr, true)
   for(const k in state){
     const val = state[k]
-    if (typeof val !== 'string') continue;
-    const order = decodeNamedTuple(codec.decode(Buffer.from(val, 'hex')), ['item', 'quantity'])
-    console.log(order)
+    // appease ts 
+    if (!isUint8Array(val)) continue;
+    console.log(Order.decodeBytes(val));
   }
 
 })();
