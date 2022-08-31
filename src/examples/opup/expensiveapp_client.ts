@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "beaker-ts";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
 export class ExpensiveApp extends ApplicationClient {
     desc: string = "";
     appSchema: Schema = { declared: { opup_app_id: { type: AVMType.uint64, key: "ouaid", desc: "", static: false } }, dynamic: {} };
@@ -10,9 +10,9 @@ export class ExpensiveApp extends ApplicationClient {
         new algosdk.ABIMethod({ name: "hash_it", desc: "", args: [{ type: "string", name: "input", desc: "" }, { type: "uint64", name: "iters", desc: "" }, { type: "application", name: "opup_app", desc: "" }], returns: { type: "byte[32]", desc: "" } }),
         new algosdk.ABIMethod({ name: "opup_bootstrap", desc: "", args: [{ type: "pay", name: "ptxn", desc: "" }], returns: { type: "uint64", desc: "" } })
     ];
-    async hash_it(input: string, iters: bigint, opup_app: any): Promise<ABIResult<number[]>> {
+    async hash_it(input: string, iters: bigint, opup_app: bigint): Promise<ABIResult<Uint8Array>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "hash_it"), { input: input, iters: iters, opup_app: opup_app });
-        return new ABIResult<number[]>(result);
+        return new ABIResult<Uint8Array>(result);
     }
     async opup_bootstrap(ptxn: algosdk.TransactionWithSigner | algosdk.Transaction): Promise<ABIResult<bigint>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "opup_bootstrap"), { ptxn: ptxn });

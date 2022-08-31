@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "beaker-ts";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
 export class HelloBeaker extends ApplicationClient {
     desc: string = "";
     appSchema: Schema = { declared: {}, dynamic: {} };

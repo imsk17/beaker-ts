@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "beaker-ts";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
 export class Order {
     item: string;
     quantity: bigint;

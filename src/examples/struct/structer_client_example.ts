@@ -16,10 +16,10 @@ import {Order, Structer} from "./structer_client";
 
   await appClient.optIn()
 
-  const result = await appClient.place_order(1, {item: "cubes", quantity: 1});
+  const result = await appClient.place_order(BigInt(1), {item: "cubes", quantity: BigInt(1)});
   console.log(result.txID); 
 
-  const result2 = await appClient.increase_quantity(1);
+  const result2 = await appClient.increase_quantity(BigInt(1));
   console.log("Result: ", result2.value); 
   console.log("Or: ", Order.decodeResult(result2.returnValue));
 

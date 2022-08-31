@@ -25,6 +25,8 @@ const CLIENT_PATH = "beaker-ts";
 const ALGOSDK_IMPORTS = "algosdk";
 const ALGOSDK_PATH = "algosdk";
 
+const REF_TYPES: string[] = ["account", "application", "asset"];
+
 const TXN_TYPES: string[] = [
   "txn",
   "pay",
@@ -119,15 +121,23 @@ function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
 }
 
 function tsTypeFromAbiType(argType: string | algosdk.ABIType): ts.TypeNode {
-  if (typeof argType === "string" && TXN_TYPES.includes(argType))
+  if (typeof argType === "string") {
+    if (TXN_TYPES.includes(argType))
       return factory.createUnionTypeNode([
         factory.createTypeReferenceNode("algosdk.TransactionWithSigner"),
         factory.createTypeReferenceNode("algosdk.Transaction"),
       ]);
 
+    if (REF_TYPES.includes(argType)) {
+      if (["application", "asset"].includes(argType))
+        return factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword);
+
+      return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+    }
+  }
 
   const abiType =
-    typeof argType == "string" ? algosdk.ABIType.from(argType) : argType;
+    typeof argType === "string" ? algosdk.ABIType.from(argType) : argType;
   switch (abiType.constructor) {
     case algosdk.ABIByteType:
       return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
