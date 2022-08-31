@@ -1,4 +1,4 @@
-import { getAccounts, getAlgodClient } from "../../sandbox/";
+import { getAccounts, getAlgodClient } from "../../";
 
 import {HelloBeaker} from "./hellobeaker_client";
 

@@ -1,4 +1,4 @@
-import { getAccounts, getAlgodClient } from "../../sandbox/";
+import { getAccounts, getAlgodClient } from "../../";
 import {Order, Structer} from "./structer_client";
 
 (async function () {

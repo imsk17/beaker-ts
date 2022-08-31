@@ -18,11 +18,8 @@ import { writeFileSync } from "fs";
 // https://ts-ast-viewer.com/#
 
 const CLIENT_NAME = "ApplicationClient";
-const CLIENT_IMPORTS = `{${CLIENT_NAME}, ABIResult, decodeNamedTuple}` 
-const CLIENT_PATH = "../../application_client/";
-
-const APP_SPEC_IMPORTS = "{Schema,AVMType}";
-const APP_SPEC_PATH = "../../generate/";
+const CLIENT_IMPORTS = `{${CLIENT_NAME}, ABIResult, decodeNamedTuple, Schema, AVMType}` 
+const CLIENT_PATH = "beaker-ts";
 
 const ALGOSDK_IMPORTS = "algosdk";
 const ALGOSDK_PATH = "algosdk";
@@ -50,7 +47,7 @@ const TXN_TYPES: string[] = [
   "frz",
 ];
 
-export default function generateApplicationClient(appSpec: AppSpec, path: string) {
+export function generateApplicationClient(appSpec: AppSpec, path: string) {
   const name = appSpec.contract.name;
 
   const nodes: ts.Node[] = generateImports();
@@ -108,18 +105,6 @@ function generateImports(): ts.ImportDeclaration[] {
       undefined
     ),
 
-    // Import app spec stuff
-    factory.createImportDeclaration(
-      undefined,
-      undefined,
-      factory.createImportClause(
-        false,
-        factory.createIdentifier(APP_SPEC_IMPORTS),
-        undefined
-      ),
-      factory.createStringLiteral(APP_SPEC_PATH),
-      undefined
-    ),
   ];
 }
 

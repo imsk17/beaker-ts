@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { generateApplicationClient, AppSpec } from "./generate/";
+import { generateApplicationClient, AppSpec } from "./";
 import fs from "fs";
 
 

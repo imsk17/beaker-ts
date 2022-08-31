@@ -1,6 +1,6 @@
 import algosdk, { ABIValue, SuggestedParams, TransactionParams } from "algosdk";
 
-import { getStateSchema, Schema } from "../generate/";
+import { getStateSchema, Schema } from "../";
 import { parseLogicError, LogicError } from "./logic_error";
 
 export type MethodArg = algosdk.ABIArgument | algosdk.Transaction | object | MethodArg[];

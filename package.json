@@ -1,6 +1,6 @@
 {
   "name": "beaker-ts",
-  "version": "1.0.0",
+  "version": "0.0.3",
   "description": "",
   "main": "./lib/index.js",
   "scripts": {
@@ -9,14 +9,13 @@
     "structer": "npx ts-node src/examples/struct/structer_client_example.ts",
     "avm7": "npx ts-node src/examples/demo_avm7/demo_avm7_example.ts",
     "build": "tsc -p .",
-    "local": "npm install -g  && beaker generate example_specs/hello.json src/",
-    "package":"npm pkg . --output beaker"
+    "local": "npm install -g  && beaker-generate-client example_specs/hello.json src/"
   },
   "bin": {
-    "generate": "./lib/generate.js"
+    "beaker-generate-client": "./lib/generate.js"
   },
   "pkg": {
-   "scripts": "lib/**/*.js"
+    "scripts": "lib/**/*.js"
   },
   "keywords": [],
   "author": "",

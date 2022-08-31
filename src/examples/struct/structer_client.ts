@@ -1,6 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple} from "../../application_client/";
-import {Schema,AVMType} from "../../generate/";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
 export type Order = {
     item: string;
     quantity: number;
