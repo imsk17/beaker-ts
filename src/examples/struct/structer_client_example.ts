@@ -1,3 +1,4 @@
+import algosdk from 'algosdk'
 import { getAccounts, getAlgodClient } from "../../";
 import {Order, Structer} from "./structer_client";
 
@@ -22,6 +23,14 @@ import {Order, Structer} from "./structer_client";
   console.log("Result: ", result2.value); 
 
 
-  console.log(await appClient.getAccountState(acct.addr))
-  
+  // TODO: can we make this obvious?
+  // Try to decode the state value from the known tuple type
+  const codec = algosdk.ABIType.from("(string,uint64)")
+  const state = await appClient.getAccountState(acct.addr, true)
+  for(const k in state){
+    const val = state[k]
+    if (typeof val !== 'string') continue;
+    console.log(codec.decode(Buffer.from(val, 'hex')))
+  }
+
 })();

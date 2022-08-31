@@ -16,7 +16,7 @@ interface StateValue {
 
 // Generic object to hold state keys/values
 interface State {
-   [key: string] : Uint8Array | string | number
+   [key: string] : string | number
 }
 
 function strOrHex(v: Buffer): string {
