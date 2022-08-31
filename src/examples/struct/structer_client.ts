@@ -24,7 +24,7 @@ export class Structer extends ApplicationClient {
     ];
     async read_item(order_number: number): Promise<ABIResult<Order>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "read_item"), { order_number: order_number });
-        return new ABIResult<Order>(result, decodeNamedTuple(result.returnValue, ["item", "quantity"]) as Order);
+        return new ABIResult<Order>(result, Order.decodeResult(result.returnValue));
     }
     async place_order(order_number: number, order: Order): Promise<ABIResult<void>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "place_order"), { order_number: order_number, order: order });
@@ -32,6 +32,6 @@ export class Structer extends ApplicationClient {
     }
     async increase_quantity(order_number: number): Promise<ABIResult<Order>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "increase_quantity"), { order_number: order_number });
-        return new ABIResult<Order>(result, decodeNamedTuple(result.returnValue, ["item", "quantity"]) as Order);
+        return new ABIResult<Order>(result, Order.decodeResult(result.returnValue));
     }
 }

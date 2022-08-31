@@ -221,18 +221,14 @@ function generateMethodImpl(method: ABIMethod, spec: AppSpec): ts.ClassElement {
     if(hint.structs !== undefined && 'output' in hint.structs){
       abiRetType = factory.createTypeReferenceNode(hint.structs['output'].name)
       resultArgs.push(
-        factory.createAsExpression(
           factory.createCallExpression(
-            factory.createIdentifier("decodeNamedTuple"),
+            factory.createPropertyAccessExpression(
+              factory.createIdentifier(hint.structs['output'].name),
+              factory.createIdentifier('decodeResult')
+            ),
             undefined,
-            [factory.createIdentifier("result.returnValue"), factory.createArrayLiteralExpression(
-              hint.structs["output"].elements.map((elem)=>{
-                return factory.createStringLiteral(elem[0])
-              })
-            )]
+            [factory.createIdentifier("result.returnValue")]
           ),
-          factory.createTypeReferenceNode(hint.structs['output'].name)
-        )
       )
     }
   }
