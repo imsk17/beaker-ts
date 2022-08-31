@@ -1,8 +1,8 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "beaker-ts";
 export class Order {
     item: string;
-    quantity: number;
+    quantity: bigint;
     static codec: algosdk.ABIType = algosdk.ABIType.from("(string,uint16)");
     static fields: string[] = ["item", "quantity"];
     static decodeResult(val: algosdk.ABIValue): Order {
@@ -23,15 +23,15 @@ export class Structer extends ApplicationClient {
         new algosdk.ABIMethod({ name: "place_order", desc: "", args: [{ type: "uint8", name: "order_number", desc: "" }, { type: "(string,uint16)", name: "order", desc: "" }], returns: { type: "void", desc: "" } }),
         new algosdk.ABIMethod({ name: "increase_quantity", desc: "", args: [{ type: "uint8", name: "order_number", desc: "" }], returns: { type: "(string,uint16)", desc: "" } })
     ];
-    async read_item(order_number: number): Promise<ABIResult<Order>> {
+    async read_item(order_number: bigint): Promise<ABIResult<Order>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "read_item"), { order_number: order_number });
         return new ABIResult<Order>(result, Order.decodeResult(result.returnValue));
     }
-    async place_order(order_number: number, order: Order): Promise<ABIResult<void>> {
+    async place_order(order_number: bigint, order: Order): Promise<ABIResult<void>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "place_order"), { order_number: order_number, order: order });
         return new ABIResult<void>(result);
     }
-    async increase_quantity(order_number: number): Promise<ABIResult<Order>> {
+    async increase_quantity(order_number: bigint): Promise<ABIResult<Order>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "increase_quantity"), { order_number: order_number });
         return new ABIResult<Order>(result, Order.decodeResult(result.returnValue));
     }

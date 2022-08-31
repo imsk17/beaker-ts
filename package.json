@@ -8,6 +8,7 @@
     "hello": "npx ts-node src/examples/hello/hello_client_example.ts",
     "structer": "npx ts-node src/examples/struct/structer_client_example.ts",
     "avm7": "npx ts-node src/examples/demo_avm7/demo_avm7_example.ts",
+    
 
     "build": "tsc -p .",
 
