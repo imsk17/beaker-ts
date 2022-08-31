@@ -2,21 +2,11 @@
 
 EXPERIMENTAL
 
-> :warning: **Barely works, zero tests, hardcoded paths**
+> :warning: **zero tests, please report issues**
 
-## Example
+## Generate a client Spec
 
-git clone this repo and cd into it
-
-```sh
-rm src/examples/hello/hellobeaker_client.ts
-npm run gen src/examples/hello/hello.json src/examples/hello
-npm run hello
-```
-
-## Generate a client
-
-To generate a client, use [beaker-pyteal](https://github.com/algorand-devrel/beaker) to create an Application and write the app spec to json
+Use [beaker-pyteal](https://github.com/algorand-devrel/beaker) to create an Application and write the app spec to json
 
 ```py
 import json
@@ -34,8 +24,23 @@ with open("app.json", "w") as f:
 
 ```
 
+## Generate a TypeScript Client
+
+In a node project directory install beaker-ts
 ```sh
-npm run gen $PATH_TO_APP_SPEC_JSON $PATH_TO_WHERE_CLIENT_SHOULD_BE_WRITTEN 
+npm install beaker-ts
 ```
+
+Generate the client using the beaker command
+
+```sh
+npx beaker generate  $PATH_TO_APP_SPEC_JSON $PATH_TO_WHERE_CLIENT_SHOULD_BE_WRITTEN 
+```
+
+This should create a new file called `${NAME_OF_APP}_client.ts`
+
+The client can now be imported and used to create or call the app!
+
+See the [examples directory](./src/examples/) for usage examples.
 
 Please report issues (bound to be lots)
