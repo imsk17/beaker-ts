@@ -10,7 +10,7 @@ import {
   AppSources,
 } from "./appspec";
 
-import algosdk, { abiCheckTransactionType, ABIMethod } from "algosdk";
+import algosdk from "algosdk";
 import ts, { factory, NodeFactory } from "typescript";
 import { writeFileSync } from "fs";
 
@@ -19,7 +19,7 @@ import { writeFileSync } from "fs";
 
 const CLIENT_NAME = "ApplicationClient";
 // TODO: only import if we _need_ them
-const CLIENT_IMPORTS = `{${CLIENT_NAME}, ABIResult, decodeNamedTuple, Schema, AVMType}` 
+const CLIENT_IMPORTS = `{${CLIENT_NAME}, ABIResult, decodeNamedTuple, Schema, AVMType}`;
 const CLIENT_PATH = "beaker-ts";
 
 const ALGOSDK_IMPORTS = "algosdk";
@@ -41,7 +41,7 @@ export function generateApplicationClient(appSpec: AppSpec, path: string) {
   const nodes: ts.Node[] = generateImports();
 
   const structNodes = generateStructTypes(appSpec);
-  nodes.push(...structNodes)
+  nodes.push(...structNodes);
 
   const classNode = generateClass(appSpec);
   nodes.push(classNode);
@@ -92,16 +92,13 @@ function generateImports(): ts.ImportDeclaration[] {
       factory.createStringLiteral(CLIENT_PATH),
       undefined
     ),
-
   ];
 }
 
 function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
   return factory.createClassDeclaration(
     undefined,
-    [
-      factory.createModifier(ts.SyntaxKind.ExportKeyword),
-    ],
+    [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
     factory.createIdentifier(appSpec.contract.name),
     undefined,
     [
@@ -114,60 +111,86 @@ function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
     ],
     [
       ...generateContractProperties(appSpec),
-      ...appSpec.contract.methods.map((meth) => generateMethodImpl(meth, appSpec)),
+      ...appSpec.contract.methods.map((meth) =>
+        generateMethodImpl(meth, appSpec)
+      ),
     ]
   );
 }
 
 function tsTypeFromAbiType(argType: string | algosdk.ABIType): ts.TypeNode {
-
-  if (typeof argType ==='string' ) {
-    if (TXN_TYPES.includes(argType)) return factory.createUnionTypeNode([
-      factory.createTypeReferenceNode("algosdk.TransactionWithSigner"),
-      factory.createTypeReferenceNode("algosdk.Transaction"),
-    ]);
+  if (typeof argType === "string") {
+    if (TXN_TYPES.includes(argType))
+      return factory.createUnionTypeNode([
+        factory.createTypeReferenceNode("algosdk.TransactionWithSigner"),
+        factory.createTypeReferenceNode("algosdk.Transaction"),
+      ]);
   }
 
-  try {
-    // Might be a transaction
-    const abiType = (typeof argType == 'string')?algosdk.ABIType.from(argType):argType
-    switch(abiType.constructor) {
-      case algosdk.ABIByteType:
-        return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
-      case algosdk.ABIUintType:
-      case algosdk.ABIUfixedType:
-        return factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword);
-      case algosdk.ABIAddressType:
-      case algosdk.ABIStringType:
-        return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-      case algosdk.ABIBoolType:
-        return factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
-      case algosdk.ABIArrayStaticType:
-      case algosdk.ABIArrayDynamicType:
-        return factory.createArrayTypeNode(tsTypeFromAbiType((abiType as algosdk.ABIArrayStaticType).childType)) 
-      case algosdk.ABITupleType:
-        return factory.createTupleTypeNode([
-          factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword),
-          factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
-        ])
-    }
+  // Might be a transaction
+  const abiType =
+    typeof argType == "string" ? algosdk.ABIType.from(argType) : argType;
+  switch (abiType.constructor) {
+    case algosdk.ABIByteType:
+      return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
+    case algosdk.ABIUintType:
+    case algosdk.ABIUfixedType:
+      return factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword);
+    case algosdk.ABIAddressType:
+    case algosdk.ABIStringType:
+      return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+    case algosdk.ABIBoolType:
+      return factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+    case algosdk.ABIArrayStaticType:
+      const asStaticArr = abiType as algosdk.ABIArrayStaticType;
+      switch (asStaticArr.childType.constructor) {
+        // If its bytes, make it a uint8array
+        case algosdk.ABIByteType:
+          return factory.createTypeReferenceNode(
+            factory.createIdentifier("Uint8Array")
+          );
+      }
 
-  }catch{}
+      return factory.createArrayTypeNode(
+        tsTypeFromAbiType(asStaticArr.childType)
+      );
+    case algosdk.ABIArrayDynamicType:
+      const asArr = abiType as algosdk.ABIArrayStaticType;
 
+      switch (asArr.childType.constructor) {
+        // If its bytes, make it a uint8array
+        case algosdk.ABIByteType:
+          return factory.createTypeReferenceNode(
+            factory.createIdentifier("Uint8Array")
+          );
+      }
+
+      return factory.createArrayTypeNode(tsTypeFromAbiType(asArr.childType));
+
+    case algosdk.ABITupleType:
+      const asTuple = abiType as algosdk.ABITupleType;
+      return factory.createTupleTypeNode(
+        asTuple.childTypes.map((elem: algosdk.ABIType) => {
+          return tsTypeFromAbiType(elem);
+        })
+      );
+  }
 
   return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
 }
 
-function generateMethodImpl(method: ABIMethod, spec: AppSpec): ts.ClassElement {
+function generateMethodImpl(
+  method: algosdk.ABIMethod,
+  spec: AppSpec
+): ts.ClassElement {
   const params: ts.ParameterDeclaration[] = [];
 
   const callArgs: ts.Expression[] = [];
 
   const abiMethodArgs: ts.PropertyAssignment[] = [];
 
-  let hint = {} as Hint
-  if(method.name in spec.hints)
-    hint = spec.hints[method.name]
+  let hint = {} as Hint;
+  if (method.name in spec.hints) hint = spec.hints[method.name];
 
   callArgs.push(
     factory.createCallExpression(
@@ -184,19 +207,19 @@ function generateMethodImpl(method: ABIMethod, spec: AppSpec): ts.ClassElement {
   );
 
   for (const arg of method.args) {
-    let argType
-    if(hint.structs !== undefined && arg.name in hint.structs) {
-        // Its got a struct def, so we should specify the struct type in args and
-        // get the values when we call `call`
-        argType = factory.createTypeReferenceNode(hint.structs[arg.name].name)
-        abiMethodArgs.push(
-          factory.createPropertyAssignment(
-            factory.createIdentifier(arg.name),
-            factory.createIdentifier(arg.name),
-          ) 
-        );
-    }else{
-      argType = tsTypeFromAbiType(arg.type.toString())
+    let argType;
+    if (hint.structs !== undefined && arg.name in hint.structs) {
+      // Its got a struct def, so we should specify the struct type in args and
+      // get the values when we call `call`
+      argType = factory.createTypeReferenceNode(hint.structs[arg.name].name);
+      abiMethodArgs.push(
+        factory.createPropertyAssignment(
+          factory.createIdentifier(arg.name),
+          factory.createIdentifier(arg.name)
+        )
+      );
+    } else {
+      argType = tsTypeFromAbiType(arg.type.toString());
       abiMethodArgs.push(
         factory.createPropertyAssignment(
           factory.createIdentifier(arg.name),
@@ -219,30 +242,32 @@ function generateMethodImpl(method: ABIMethod, spec: AppSpec): ts.ClassElement {
   }
 
   // Set up return type
-  let abiRetType: ts.TypeNode = factory.createKeywordTypeNode(ts.SyntaxKind.VoidKeyword);
-  let resultArgs: ts.Expression[] = [factory.createIdentifier("result")]
+  let abiRetType: ts.TypeNode = factory.createKeywordTypeNode(
+    ts.SyntaxKind.VoidKeyword
+  );
+  let resultArgs: ts.Expression[] = [factory.createIdentifier("result")];
 
-  if(method.returns.type.toString() !== "void"){
-    abiRetType = tsTypeFromAbiType(method.returns.type.toString())
-    // Always `output` here because pyteal, 
+  if (method.returns.type.toString() !== "void") {
+    abiRetType = tsTypeFromAbiType(method.returns.type.toString());
+    // Always `output` here because pyteal,
     // when others app specs come in we should consider them
-    if(hint.structs !== undefined && 'output' in hint.structs){
-      abiRetType = factory.createTypeReferenceNode(hint.structs['output'].name)
+    if (hint.structs !== undefined && "output" in hint.structs) {
+      abiRetType = factory.createTypeReferenceNode(hint.structs["output"].name);
       resultArgs.push(
-          factory.createCallExpression(
-            factory.createPropertyAccessExpression(
-              factory.createIdentifier(hint.structs['output'].name),
-              factory.createIdentifier('decodeResult')
-            ),
-            undefined,
-            [
-              factory.createPropertyAccessExpression(
-                factory.createIdentifier("result"),
-                factory.createIdentifier("returnValue"),
-              )
-            ]
+        factory.createCallExpression(
+          factory.createPropertyAccessExpression(
+            factory.createIdentifier(hint.structs["output"].name),
+            factory.createIdentifier("decodeResult")
           ),
-      )
+          undefined,
+          [
+            factory.createPropertyAccessExpression(
+              factory.createIdentifier("result"),
+              factory.createIdentifier("returnValue")
+            ),
+          ]
+        )
+      );
     }
   }
 
@@ -263,10 +288,13 @@ function generateMethodImpl(method: ABIMethod, spec: AppSpec): ts.ClassElement {
                     factory.createIdentifier("call")
                   ),
                   undefined,
-                  [...callArgs, factory.createObjectLiteralExpression(abiMethodArgs)]
+                  [
+                    ...callArgs,
+                    factory.createObjectLiteralExpression(abiMethodArgs),
+                  ]
                 )
               )
-            )
+            ),
           ],
           ts.NodeFlags.Const
         )
@@ -277,17 +305,19 @@ function generateMethodImpl(method: ABIMethod, spec: AppSpec): ts.ClassElement {
           [abiRetType],
           resultArgs
         )
-      )
+      ),
     ],
     true
   );
 
-  
-
   let retType = factory.createTypeReferenceNode(
     factory.createIdentifier("Promise"),
-    [factory.createTypeReferenceNode( factory.createIdentifier("ABIResult") , [abiRetType])]
-  )
+    [
+      factory.createTypeReferenceNode(factory.createIdentifier("ABIResult"), [
+        abiRetType,
+      ]),
+    ]
+  );
 
   const methodSpec = factory.createMethodDeclaration(
     undefined,
@@ -346,7 +376,7 @@ function copySchemaObject(so: Schema): ts.Expression {
           ),
           factory.createPropertyAssignment(
             factory.createIdentifier("max_keys"),
-            factory.createNumericLiteral(sv[1].max_keys?sv[1].max_keys:0)
+            factory.createNumericLiteral(sv[1].max_keys ? sv[1].max_keys : 0)
           ),
         ])
       );
@@ -366,32 +396,32 @@ function copySchemaObject(so: Schema): ts.Expression {
 }
 
 function generateStructTypes(spec: AppSpec): ts.Node[] {
-  const hints = spec.hints
+  const hints = spec.hints;
 
-  const structs = {}
-  for(const k of Object.keys(hints)){
-    const hint = hints[k]
-    if(hint.structs !== undefined){
-      for(const sk of Object.keys(hint.structs)){
-        const struct = hint.structs[sk]
-        if(!(struct.name in struct)){
-          structs[struct.name] = generateStruct(struct)
+  const structs = {};
+  for (const k of Object.keys(hints)) {
+    const hint = hints[k];
+    if (hint.structs !== undefined) {
+      for (const sk of Object.keys(hint.structs)) {
+        const struct = hint.structs[sk];
+        if (!(struct.name in struct)) {
+          structs[struct.name] = generateStruct(struct);
         }
       }
     }
   }
 
-  return Object.values(structs)
+  return Object.values(structs);
 }
 
 function generateStruct(s: Struct): ts.ClassDeclaration {
-  const members: ts.ClassElement[] = []
+  const members: ts.ClassElement[] = [];
   const tupleTypes: string[] = [];
   const tupleNames: string[] = [];
 
-  for(const elem of s.elements){
-    tupleNames.push(elem[0])
-    tupleTypes.push(elem[1])
+  for (const elem of s.elements) {
+    tupleNames.push(elem[0]);
+    tupleTypes.push(elem[1]);
 
     members.push(
       factory.createPropertyDeclaration(
@@ -400,58 +430,63 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
         factory.createIdentifier(elem[0]),
         undefined,
         tsTypeFromAbiType(elem[1]),
-        undefined,
+        undefined
       )
-    )
+    );
   }
 
   members.push(
     factory.createPropertyDeclaration(
-        undefined,
-        [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
-        factory.createIdentifier("codec"),
-        undefined,
-        factory.createTypeReferenceNode(
-          factory.createQualifiedName(
+      undefined,
+      [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
+      factory.createIdentifier("codec"),
+      undefined,
+      factory.createTypeReferenceNode(
+        factory.createQualifiedName(
+          factory.createIdentifier("algosdk"),
+          factory.createIdentifier("ABIType")
+        ),
+        undefined
+      ),
+      factory.createCallExpression(
+        factory.createPropertyAccessExpression(
+          factory.createPropertyAccessExpression(
             factory.createIdentifier("algosdk"),
             factory.createIdentifier("ABIType")
           ),
-          undefined
+          factory.createIdentifier("from")
         ),
-        factory.createCallExpression(
-          factory.createPropertyAccessExpression(
-            factory.createPropertyAccessExpression(
-              factory.createIdentifier("algosdk"),
-              factory.createIdentifier("ABIType")
-            ),
-            factory.createIdentifier("from")
-          ),
-          undefined,
-          [factory.createStringLiteral(`(${tupleTypes.join(",")})`)]
-        )
+        undefined,
+        [factory.createStringLiteral(`(${tupleTypes.join(",")})`)]
+      )
     )
-  )
-  members.push(factory.createPropertyDeclaration(
-    undefined,
-    [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
-    factory.createIdentifier("fields"),
-    undefined,
-    factory.createTypeReferenceNode("string[]"),
-    factory.createArrayLiteralExpression(
-      tupleNames.map((name)=>{ return factory.createStringLiteral(name) })
+  );
+  members.push(
+    factory.createPropertyDeclaration(
+      undefined,
+      [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
+      factory.createIdentifier("fields"),
+      undefined,
+      factory.createTypeReferenceNode("string[]"),
+      factory.createArrayLiteralExpression(
+        tupleNames.map((name) => {
+          return factory.createStringLiteral(name);
+        })
+      )
     )
-  ))
+  );
 
   members.push(
     // Add static `decodeResult(val: ABIValue): <T>` method
     factory.createMethodDeclaration(
-        undefined,
-        [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
-        undefined,
-        factory.createIdentifier("decodeResult"),
-        undefined,
-        undefined,
-        [factory.createParameterDeclaration(
+      undefined,
+      [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
+      undefined,
+      factory.createIdentifier("decodeResult"),
+      undefined,
+      undefined,
+      [
+        factory.createParameterDeclaration(
           undefined,
           undefined,
           undefined,
@@ -465,43 +500,52 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
             undefined
           ),
           undefined
-        )],
-        factory.createTypeReferenceNode(
-          factory.createIdentifier(s.name),
-          undefined
         ),
-        factory.createBlock(
-          [factory.createReturnStatement(factory.createAsExpression(
-            factory.createCallExpression(
-              factory.createIdentifier("decodeNamedTuple"),
-              undefined,
-              [
-                factory.createIdentifier("val"),
-                factory.createPropertyAccessExpression(
-                  factory.createIdentifier(s.name),
-                  factory.createIdentifier("fields")
-                ),
-              ]
-            ),
-            factory.createTypeReferenceNode(
-              factory.createIdentifier(s.name),
-              undefined
+      ],
+      factory.createTypeReferenceNode(
+        factory.createIdentifier(s.name),
+        undefined
+      ),
+      factory.createBlock(
+        [
+          factory.createReturnStatement(
+            factory.createAsExpression(
+              factory.createCallExpression(
+                factory.createIdentifier("decodeNamedTuple"),
+                undefined,
+                [
+                  factory.createIdentifier("val"),
+                  factory.createPropertyAccessExpression(
+                    factory.createIdentifier(s.name),
+                    factory.createIdentifier("fields")
+                  ),
+                ]
+              ),
+              factory.createTypeReferenceNode(
+                factory.createIdentifier(s.name),
+                undefined
+              )
             )
-          ))],
-          true
-        )
+          ),
+        ],
+        true
       )
     )
+  );
 
-    members.push(
-      factory.createMethodDeclaration(
-        undefined,
-        [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
-        undefined,
-        factory.createIdentifier("decodeBytes"),
-        undefined, undefined,
-        [factory.createParameterDeclaration(
-          undefined, undefined, undefined,
+  members.push(
+    factory.createMethodDeclaration(
+      undefined,
+      [factory.createModifier(ts.SyntaxKind.StaticKeyword)],
+      undefined,
+      factory.createIdentifier("decodeBytes"),
+      undefined,
+      undefined,
+      [
+        factory.createParameterDeclaration(
+          undefined,
+          undefined,
+          undefined,
           factory.createIdentifier("val"),
           undefined,
           factory.createTypeReferenceNode(
@@ -509,45 +553,48 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
             undefined
           ),
           undefined
-        )],
-        factory.createTypeReferenceNode(
-          factory.createIdentifier(s.name),
-          undefined
         ),
-        factory.createBlock(
-          [factory.createReturnStatement(factory.createAsExpression(
-            factory.createCallExpression(
-              factory.createIdentifier("decodeNamedTuple"),
-              undefined,
-              [
-                factory.createCallExpression(
-                  factory.createPropertyAccessExpression(
+      ],
+      factory.createTypeReferenceNode(
+        factory.createIdentifier(s.name),
+        undefined
+      ),
+      factory.createBlock(
+        [
+          factory.createReturnStatement(
+            factory.createAsExpression(
+              factory.createCallExpression(
+                factory.createIdentifier("decodeNamedTuple"),
+                undefined,
+                [
+                  factory.createCallExpression(
                     factory.createPropertyAccessExpression(
-                      factory.createIdentifier(s.name),
-                      factory.createIdentifier("codec")
+                      factory.createPropertyAccessExpression(
+                        factory.createIdentifier(s.name),
+                        factory.createIdentifier("codec")
+                      ),
+                      factory.createIdentifier("decode")
                     ),
-                    factory.createIdentifier("decode")
+                    undefined,
+                    [factory.createIdentifier("val")]
                   ),
-                  undefined,
-                  [factory.createIdentifier("val")]
-                ),
-                factory.createPropertyAccessExpression(
-                  factory.createIdentifier(s.name),
-                  factory.createIdentifier("fields")
-                ),
-              ]
-            ),
-            factory.createTypeReferenceNode(
-              factory.createIdentifier(s.name),
-              undefined
+                  factory.createPropertyAccessExpression(
+                    factory.createIdentifier(s.name),
+                    factory.createIdentifier("fields")
+                  ),
+                ]
+              ),
+              factory.createTypeReferenceNode(
+                factory.createIdentifier(s.name),
+                undefined
+              )
             )
-          ))],
-          true
-        )
+          ),
+        ],
+        true
       )
     )
-
-
+  );
 
   return factory.createClassDeclaration(
     undefined,
@@ -556,8 +603,7 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
     undefined,
     undefined,
     members
-  )
-
+  );
 }
 
 function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {

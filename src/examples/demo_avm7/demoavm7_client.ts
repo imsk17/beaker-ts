@@ -2,7 +2,7 @@ import algosdk from "algosdk";
 import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
 export class BlockDetails {
     ts: bigint;
-    seed: number[];
+    seed: Uint8Array;
     static codec: algosdk.ABIType = algosdk.ABIType.from("(uint64,byte[32])");
     static fields: string[] = ["ts", "seed"];
     static decodeResult(val: algosdk.ABIValue): BlockDetails {
@@ -45,9 +45,9 @@ export class DemoAVM7 extends ApplicationClient {
         const result = await this.call(algosdk.getMethodByName(this.methods, "replace"), { orig: orig, start: start, replace_with: replace_with });
         return new ABIResult<string>(result);
     }
-    async sha3_256(to_hash: string): Promise<ABIResult<number[]>> {
+    async sha3_256(to_hash: string): Promise<ABIResult<Uint8Array>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "sha3_256"), { to_hash: to_hash });
-        return new ABIResult<number[]>(result);
+        return new ABIResult<Uint8Array>(result);
     }
     async noop(): Promise<ABIResult<void>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "noop"), {});
@@ -57,7 +57,7 @@ export class DemoAVM7 extends ApplicationClient {
         const result = await this.call(algosdk.getMethodByName(this.methods, "block"), { round: round });
         return new ABIResult<BlockDetails>(result, BlockDetails.decodeResult(result.returnValue));
     }
-    async ed25519verify_bare(msg: string, sig: number[]): Promise<ABIResult<boolean>> {
+    async ed25519verify_bare(msg: string, sig: Uint8Array): Promise<ABIResult<boolean>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "ed25519verify_bare"), { msg: msg, sig: sig });
         return new ABIResult<boolean>(result);
     }
@@ -69,8 +69,8 @@ export class DemoAVM7 extends ApplicationClient {
         const result = await this.call(algosdk.getMethodByName(this.methods, "json_ref"), { json_str: json_str });
         return new ABIResult<JsonExampleResult>(result, JsonExampleResult.decodeResult(result.returnValue));
     }
-    async vrf_verify(msg: number[], proof: number[], pub_key: string): Promise<ABIResult<number[]>> {
+    async vrf_verify(msg: Uint8Array, proof: Uint8Array, pub_key: string): Promise<ABIResult<Uint8Array>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "vrf_verify"), { msg: msg, proof: proof, pub_key: pub_key });
-        return new ABIResult<number[]>(result);
+        return new ABIResult<Uint8Array>(result);
     }
 }
