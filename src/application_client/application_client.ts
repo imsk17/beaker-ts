@@ -28,7 +28,7 @@ export class ABIResult<T extends ABIReturnType> {
 
   value: T;
 
-  constructor(result: algosdk.ABIResult, value?: T){
+  constructor(result: algosdk.ABIResult | undefined, value?: T){
     this.txID = result.txID;
     this.rawReturnValue = result.rawReturnValue;
     this.method = result.method;
