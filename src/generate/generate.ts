@@ -2,16 +2,13 @@ import {
   AppSpec,
   DeclaredSchemaValueSpec,
   DynamicSchemaValueSpec,
-  HintSpec,
   Hint,
   Schema,
   Struct,
-  SchemaSpec,
-  AppSources,
 } from "./appspec";
 
 import algosdk from "algosdk";
-import ts, { factory, NodeFactory } from "typescript";
+import ts, { factory } from "typescript";
 import { writeFileSync } from "fs";
 
 // AMAZING resource:

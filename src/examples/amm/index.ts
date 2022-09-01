@@ -35,6 +35,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
   // The return value is the id of the pool token
   const poolToken = bootstrapResult.value
 
+  // Opt user into new pool token
   const optInToAsset = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: acct.addr,
@@ -42,17 +43,16 @@ import { ConstantProductAMM } from "./constantproductamm_client";
       amount: 0,
       assetIndex: Number(poolToken),
    })
-   await appClient.client.sendRawTransaction(optInToAsset.signTxn(acct.privateKey)).do()
+   appClient.client.sendRawTransaction(optInToAsset.signTxn(acct.privateKey)).do()
    await algosdk.waitForConfirmation(appClient.client, optInToAsset.txID(), 4)
 
-
-
+   // Fund the pool with initial liquidity
   const fundResult = await appClient.mint(
     algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddr,
       suggestedParams: await appClient.client.getTransactionParams().do(),
-      amount: BigInt(1e6),
+      amount: BigInt(1e8),
       assetIndex: Number(assetA),
     }),
     algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
@@ -67,8 +67,57 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     assetB
   )
 
-  console.log(fundResult.returnValue)
+  const receivedAmt = fundResult.txInfo['inner-txns'][0]['txn']['txn']['aamt']
+  console.log(`Received ${receivedAmt} pool tokens`)
 
+  // Try to swap A for B
+  const swapAtoB = await appClient.swap(
+    algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      from: acct.addr,
+      to: appAddr,
+      suggestedParams: await appClient.client.getTransactionParams().do(),
+      amount: BigInt(1e3),
+      assetIndex: Number(assetA),
+    }),
+    assetA,
+    assetB
+  )
+  const receivedBAmt = swapAtoB.txInfo['inner-txns'][0]['txn']['txn']['aamt']
+  console.log(`Received ${receivedBAmt} B tokens`)
+
+  // Try to swap B for A 
+  const swapBtoA = await appClient.swap(
+    algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      from: acct.addr,
+      to: appAddr,
+      suggestedParams: await appClient.client.getTransactionParams().do(),
+      amount: BigInt(1e3),
+      assetIndex: Number(assetB),
+    }),
+    assetA,
+    assetB
+  )
+  const receivedAAmt = swapBtoA.txInfo['inner-txns'][0]['txn']['txn']['aamt']
+  console.log(`Received ${receivedAAmt} A tokens`)
+
+  // Burn some pool tokens
+  const burnResult = await appClient.burn(
+    algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      from: acct.addr,
+      to: appAddr,
+      suggestedParams: await appClient.client.getTransactionParams().do(),
+      amount: BigInt(10),
+      assetIndex: Number(poolToken),
+    }),
+    poolToken,
+    assetA,
+    assetB
+  )
+
+  const aRcv = burnResult.txInfo['inner-txns'][0]['txn']['txn']['aamt']
+  const bRcv = burnResult.txInfo['inner-txns'][1]['txn']['txn']['aamt']
+
+  console.log(`Received ${aRcv} A tokens and ${bRcv} B tokens`)
 
 })();
 
@@ -80,7 +129,7 @@ async function createAssets(
   const createA = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
     from: acct.addr,
     suggestedParams: sp,
-    total: 10000000,
+    total: BigInt(1e10),
     decimals: 0,
     defaultFrozen: false,
     assetName: "Asset A",
@@ -90,7 +139,7 @@ async function createAssets(
   const createB = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
     from: acct.addr,
     suggestedParams: sp,
-    total: 10000000,
+    total: BigInt(1e9),
     decimals: 0,
     defaultFrozen: false,
     assetName: "Asset B",

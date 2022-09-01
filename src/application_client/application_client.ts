@@ -294,8 +294,6 @@ export class ApplicationClient {
       processedArgs.push(arg as algosdk.ABIArgument);
     }
 
-    console.log(processedArgs)
-
     atc.addMethodCall({
       appID: this.appId,
       method: method,
