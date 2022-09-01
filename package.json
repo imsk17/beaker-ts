@@ -1,20 +1,24 @@
 {
   "name": "beaker-ts",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "",
   "main": "./lib/index.js",
   "scripts": {
-    "beaker": "npx ts-node src/beaker.ts",
+    "beaker": "npx ts-node src/beaker.ts", 
     "hello": "npx ts-node src/examples/hello/hello_client_example.ts",
     "structer": "npx ts-node src/examples/struct/structer_client_example.ts",
     "avm7": "npx ts-node src/examples/demo_avm7/demo_avm7_example.ts",
     "amm": "npx ts-node src/examples/amm/index.ts",
 
-    
+    "genhello":"npm run beaker -- generate --local src/examples/hello/hello.json src/examples/hello/",
+    "genstructer":"npm run beaker -- generate --local src/examples/struct/structer.json src/examples/struct/",
+    "genopup":"npm run beaker -- generate --local src/examples/opup/opup.json src/examples/opup/",
+    "genamm":"npm run beaker -- generate --local src/examples/amm/amm.json src/examples/amm/",
+    "genavm7":"npm run beaker -- generate --local src/examples/demo_avm7/demo_avm7.json src/examples/demo_avm7/",
 
-    "build": "tsc -p .",
+    "regen":"npm run genhello && npm run genstructer && npm run genopup && npm run genavm7",
 
-    "local": "npm install -g  && beaker generate src/examples/hello/hello.json src/examples/hello/"
+    "build": "tsc -p ."
   },
   "bin": {
     "beaker": "./lib/beaker.js"

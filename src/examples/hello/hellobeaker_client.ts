@@ -11,6 +11,6 @@ export class HelloBeaker extends ApplicationClient {
     ];
     async hello(name: string): Promise<ABIResult<string>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "hello"), { name: name });
-        return new ABIResult<string>(result);
+        return new ABIResult<string>(result, result.returnValue as string);
     }
 }

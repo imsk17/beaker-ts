@@ -12,10 +12,10 @@ export class ExpensiveApp extends ApplicationClient {
     ];
     async hash_it(input: string, iters: bigint, opup_app: bigint): Promise<ABIResult<Uint8Array>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "hash_it"), { input: input, iters: iters, opup_app: opup_app });
-        return new ABIResult<Uint8Array>(result);
+        return new ABIResult<Uint8Array>(result, result.returnValue as Uint8Array);
     }
     async opup_bootstrap(ptxn: algosdk.TransactionWithSigner | algosdk.Transaction): Promise<ABIResult<bigint>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "opup_bootstrap"), { ptxn: ptxn });
-        return new ABIResult<bigint>(result);
+        return new ABIResult<bigint>(result, result.returnValue as bigint);
     }
 }

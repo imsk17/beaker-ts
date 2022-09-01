@@ -34,10 +34,10 @@ const TXN_TYPES: string[] = [
   "frz",
 ];
 
-export function generateApplicationClient(appSpec: AppSpec, path: string) {
+export function generateApplicationClient(appSpec: AppSpec, path: string, beakerPath?: string) {
   const name = appSpec.contract.name;
 
-  const nodes: ts.Node[] = generateImports();
+  const nodes: ts.Node[] = generateImports(beakerPath);
 
   const structNodes = generateStructTypes(appSpec);
   nodes.push(...structNodes);
@@ -64,7 +64,7 @@ export function generateApplicationClient(appSpec: AppSpec, path: string) {
 }
 
 // create the imports for the generated client
-function generateImports(): ts.ImportDeclaration[] {
+function generateImports(beakerPath?: string): ts.ImportDeclaration[] {
   return [
     // Import algosdk
     factory.createImportDeclaration(
@@ -88,7 +88,7 @@ function generateImports(): ts.ImportDeclaration[] {
         factory.createIdentifier(CLIENT_IMPORTS),
         undefined
       ),
-      factory.createStringLiteral(CLIENT_PATH),
+      factory.createStringLiteral(beakerPath?beakerPath:CLIENT_PATH),
       undefined
     ),
   ];
@@ -196,6 +196,7 @@ function generateMethodImpl(
 
   let hint = {} as Hint;
   if (method.name in spec.hints) hint = spec.hints[method.name];
+  console.log(hint)
 
   callArgs.push(
     factory.createCallExpression(

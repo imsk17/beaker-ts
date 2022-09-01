@@ -11,13 +11,17 @@ export interface Struct {
   elements: StructElement[]
 }
 
+export interface DefaultArgument {
+  source: string
+  data: string | bigint | number 
+}
 export interface Hint {
   structs: {
     [key: string]: Struct
   }
   readonly: boolean
-  param_annotations: {
-    [key: string]: any
+  default_arguments: {
+    [key: string]: DefaultArgument
   }
 }
 

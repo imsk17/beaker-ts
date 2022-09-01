@@ -43,11 +43,11 @@ export class DemoAVM7 extends ApplicationClient {
     ];
     async replace(orig: string, start: bigint, replace_with: string): Promise<ABIResult<string>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "replace"), { orig: orig, start: start, replace_with: replace_with });
-        return new ABIResult<string>(result);
+        return new ABIResult<string>(result, result.returnValue as string);
     }
     async sha3_256(to_hash: string): Promise<ABIResult<Uint8Array>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "sha3_256"), { to_hash: to_hash });
-        return new ABIResult<Uint8Array>(result);
+        return new ABIResult<Uint8Array>(result, result.returnValue as Uint8Array);
     }
     async noop(): Promise<ABIResult<void>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "noop"), {});
@@ -59,11 +59,11 @@ export class DemoAVM7 extends ApplicationClient {
     }
     async ed25519verify_bare(msg: string, sig: Uint8Array): Promise<ABIResult<boolean>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "ed25519verify_bare"), { msg: msg, sig: sig });
-        return new ABIResult<boolean>(result);
+        return new ABIResult<boolean>(result, result.returnValue as boolean);
     }
     async b64decode(b64encoded: string): Promise<ABIResult<string>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "b64decode"), { b64encoded: b64encoded });
-        return new ABIResult<string>(result);
+        return new ABIResult<string>(result, result.returnValue as string);
     }
     async json_ref(json_str: string): Promise<ABIResult<JsonExampleResult>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "json_ref"), { json_str: json_str });
@@ -71,6 +71,6 @@ export class DemoAVM7 extends ApplicationClient {
     }
     async vrf_verify(msg: Uint8Array, proof: Uint8Array, pub_key: string): Promise<ABIResult<Uint8Array>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "vrf_verify"), { msg: msg, proof: proof, pub_key: pub_key });
-        return new ABIResult<Uint8Array>(result);
+        return new ABIResult<Uint8Array>(result, result.returnValue as Uint8Array);
     }
 }
