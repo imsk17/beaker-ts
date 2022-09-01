@@ -66,9 +66,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     assetA,
     assetB
   )
-
-  const receivedAmt = fundResult.txInfo['inner-txns'][0]['txn']['txn']['aamt']
-  console.log(`Received ${receivedAmt} pool tokens`)
+  console.log(`Received ${fundResult.inners[0].aamt} pool tokens`)
 
   // Try to swap A for B
   const swapAtoB = await appClient.swap(
@@ -82,8 +80,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     assetA,
     assetB
   )
-  const receivedBAmt = swapAtoB.txInfo['inner-txns'][0]['txn']['txn']['aamt']
-  console.log(`Received ${receivedBAmt} B tokens`)
+  console.log(`Received ${swapAtoB.inners[0].aamt} B tokens`)
 
   // Try to swap B for A 
   const swapBtoA = await appClient.swap(
@@ -97,8 +94,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     assetA,
     assetB
   )
-  const receivedAAmt = swapBtoA.txInfo['inner-txns'][0]['txn']['txn']['aamt']
-  console.log(`Received ${receivedAAmt} A tokens`)
+  console.log(`Received ${swapBtoA.inners[0].aamt} A tokens`)
 
   // Burn some pool tokens
   const burnResult = await appClient.burn(
@@ -113,11 +109,9 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     assetA,
     assetB
   )
+  const [aRcv, bRcv] = burnResult.inners
 
-  const aRcv = burnResult.txInfo['inner-txns'][0]['txn']['txn']['aamt']
-  const bRcv = burnResult.txInfo['inner-txns'][1]['txn']['txn']['aamt']
-
-  console.log(`Received ${aRcv} A tokens and ${bRcv} B tokens`)
+  console.log(`Received ${aRcv.aamt} A tokens and ${bRcv.aamt} B tokens`)
 
 })();
 

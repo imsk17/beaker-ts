@@ -1,4 +1,4 @@
-import algosdk, { ABIValue, SuggestedParams, TransactionParams } from "algosdk";
+import algosdk, { ABIValue, EncodedTransaction, SuggestedParams, TransactionParams } from "algosdk";
 
 import { getStateSchema, Schema } from "../";
 import { parseLogicError, LogicError } from "./logic_error";
@@ -28,6 +28,7 @@ export class ABIResult<T extends ABIReturnType> {
   txInfo?: Record<string, any>;
 
   value: T;
+  inners: Record<string, any>[];
 
   constructor(result: algosdk.ABIResult | undefined, value?: T){
     this.txID = result.txID;
@@ -35,6 +36,19 @@ export class ABIResult<T extends ABIReturnType> {
     this.method = result.method;
     this.decodeError = result.decodeError;
     this.txInfo = result.txInfo;
+
+    this.inners = [];
+    if (result.txInfo !== undefined && 'inner-txns' in result.txInfo){
+      const outer = result.txInfo['txn']['txn'] as EncodedTransaction
+      this.inners = result.txInfo['inner-txns'].map((itxn: any)=>{
+        const et = itxn['txn']['txn'] as EncodedTransaction
+        et.gen = outer.gen 
+        et.gh = outer.gh 
+        return algosdk.Transaction.from_obj_for_encoding(itxn['txn']['txn'] as EncodedTransaction)
+      })
+    }
+
+
     this.returnValue = result.returnValue
     this.value = value 
   }
