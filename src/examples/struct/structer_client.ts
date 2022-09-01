@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides} from "../..";
 export class Order {
     item: string;
     quantity: bigint;
@@ -23,16 +23,23 @@ export class Structer extends ApplicationClient {
         new algosdk.ABIMethod({ name: "place_order", desc: "", args: [{ type: "uint8", name: "order_number", desc: "" }, { type: "(string,uint16)", name: "order", desc: "" }], returns: { type: "void", desc: "" } }),
         new algosdk.ABIMethod({ name: "increase_quantity", desc: "", args: [{ type: "uint8", name: "order_number", desc: "" }], returns: { type: "(string,uint16)", desc: "" } })
     ];
-    async read_item(order_number: bigint): Promise<ABIResult<Order>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "read_item"), { order_number: order_number });
+    async read_item(args: {
+        order_number: bigint;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<Order>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "read_item"), { order_number: args.order_number }, txnParams);
         return new ABIResult<Order>(result, Order.decodeResult(result.returnValue));
     }
-    async place_order(order_number: bigint, order: Order): Promise<ABIResult<void>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "place_order"), { order_number: order_number, order: order });
+    async place_order(args: {
+        order_number: bigint;
+        order: Order;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<void>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "place_order"), { order_number: args.order_number, order: args.order }, txnParams);
         return new ABIResult<void>(result);
     }
-    async increase_quantity(order_number: bigint): Promise<ABIResult<Order>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "increase_quantity"), { order_number: order_number });
+    async increase_quantity(args: {
+        order_number: bigint;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<Order>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "increase_quantity"), { order_number: args.order_number }, txnParams);
         return new ABIResult<Order>(result, Order.decodeResult(result.returnValue));
     }
 }

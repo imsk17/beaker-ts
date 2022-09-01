@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides} from "../..";
 export class ConstantProductAMM extends ApplicationClient {
     desc: string = "";
     appSchema: Schema = { declared: { asset_a: { type: AVMType.uint64, key: "a", desc: "", static: false }, asset_b: { type: AVMType.uint64, key: "b", desc: "", static: false }, governor: { type: AVMType.bytes, key: "g", desc: "", static: false }, pool_token: { type: AVMType.uint64, key: "p", desc: "", static: false }, ratio: { type: AVMType.uint64, key: "r", desc: "", static: false } }, dynamic: {} };
@@ -13,24 +13,45 @@ export class ConstantProductAMM extends ApplicationClient {
         new algosdk.ABIMethod({ name: "set_governor", desc: "", args: [{ type: "account", name: "new_governor", desc: "" }], returns: { type: "void", desc: "" } }),
         new algosdk.ABIMethod({ name: "swap", desc: "", args: [{ type: "axfer", name: "swap_xfer", desc: "" }, { type: "asset", name: "a_asset", desc: "" }, { type: "asset", name: "b_asset", desc: "" }], returns: { type: "void", desc: "" } })
     ];
-    async bootstrap(seed: algosdk.TransactionWithSigner | algosdk.Transaction, a_asset: bigint, b_asset: bigint): Promise<ABIResult<bigint>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "bootstrap"), { seed: seed, a_asset: a_asset, b_asset: b_asset });
+    async bootstrap(args: {
+        seed: algosdk.TransactionWithSigner | algosdk.Transaction;
+        a_asset: bigint;
+        b_asset: bigint;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<bigint>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "bootstrap"), { seed: args.seed, a_asset: args.a_asset, b_asset: args.b_asset }, txnParams);
         return new ABIResult<bigint>(result, result.returnValue as bigint);
     }
-    async burn(pool_xfer: algosdk.TransactionWithSigner | algosdk.Transaction, pool_asset: bigint, a_asset: bigint, b_asset: bigint): Promise<ABIResult<void>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "burn"), { pool_xfer: pool_xfer, pool_asset: pool_asset, a_asset: a_asset, b_asset: b_asset });
+    async burn(args: {
+        pool_xfer: algosdk.TransactionWithSigner | algosdk.Transaction;
+        pool_asset: bigint;
+        a_asset: bigint;
+        b_asset: bigint;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<void>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "burn"), { pool_xfer: args.pool_xfer, pool_asset: args.pool_asset, a_asset: args.a_asset, b_asset: args.b_asset }, txnParams);
         return new ABIResult<void>(result);
     }
-    async mint(a_xfer: algosdk.TransactionWithSigner | algosdk.Transaction, b_xfer: algosdk.TransactionWithSigner | algosdk.Transaction, pool_asset: bigint, a_asset: bigint, b_asset: bigint): Promise<ABIResult<void>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "mint"), { a_xfer: a_xfer, b_xfer: b_xfer, pool_asset: pool_asset, a_asset: a_asset, b_asset: b_asset });
+    async mint(args: {
+        a_xfer: algosdk.TransactionWithSigner | algosdk.Transaction;
+        b_xfer: algosdk.TransactionWithSigner | algosdk.Transaction;
+        pool_asset: bigint;
+        a_asset: bigint;
+        b_asset: bigint;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<void>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "mint"), { a_xfer: args.a_xfer, b_xfer: args.b_xfer, pool_asset: args.pool_asset, a_asset: args.a_asset, b_asset: args.b_asset }, txnParams);
         return new ABIResult<void>(result);
     }
-    async set_governor(new_governor: string): Promise<ABIResult<void>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "set_governor"), { new_governor: new_governor });
+    async set_governor(args: {
+        new_governor: string;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<void>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "set_governor"), { new_governor: args.new_governor }, txnParams);
         return new ABIResult<void>(result);
     }
-    async swap(swap_xfer: algosdk.TransactionWithSigner | algosdk.Transaction, a_asset: bigint, b_asset: bigint): Promise<ABIResult<void>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "swap"), { swap_xfer: swap_xfer, a_asset: a_asset, b_asset: b_asset });
+    async swap(args: {
+        swap_xfer: algosdk.TransactionWithSigner | algosdk.Transaction;
+        a_asset: bigint;
+        b_asset: bigint;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<void>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "swap"), { swap_xfer: args.swap_xfer, a_asset: args.a_asset, b_asset: args.b_asset }, txnParams);
         return new ABIResult<void>(result);
     }
 }

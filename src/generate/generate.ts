@@ -16,7 +16,7 @@ import { writeFileSync } from "fs";
 
 const CLIENT_NAME = "ApplicationClient";
 // TODO: only import if we _need_ them
-const CLIENT_IMPORTS = `{${CLIENT_NAME}, ABIResult, decodeNamedTuple, Schema, AVMType}`;
+const CLIENT_IMPORTS = `{${CLIENT_NAME}, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides}`;
 const CLIENT_PATH = "beaker-ts";
 
 const ALGOSDK_IMPORTS = "algosdk";
@@ -34,7 +34,11 @@ const TXN_TYPES: string[] = [
   "frz",
 ];
 
-export function generateApplicationClient(appSpec: AppSpec, path: string, beakerPath?: string) {
+export function generateApplicationClient(
+  appSpec: AppSpec,
+  path: string,
+  beakerPath?: string
+) {
   const name = appSpec.contract.name;
 
   const nodes: ts.Node[] = generateImports(beakerPath);
@@ -88,7 +92,7 @@ function generateImports(beakerPath?: string): ts.ImportDeclaration[] {
         factory.createIdentifier(CLIENT_IMPORTS),
         undefined
       ),
-      factory.createStringLiteral(beakerPath?beakerPath:CLIENT_PATH),
+      factory.createStringLiteral(beakerPath ? beakerPath : CLIENT_PATH),
       undefined
     ),
   ];
@@ -189,14 +193,12 @@ function generateMethodImpl(
   spec: AppSpec
 ): ts.ClassElement {
   const params: ts.ParameterDeclaration[] = [];
-
   const callArgs: ts.Expression[] = [];
-
   const abiMethodArgs: ts.PropertyAssignment[] = [];
+  const argParams: ts.PropertySignature[] = [];
 
-  let hint = {} as Hint;
-  if (method.name in spec.hints) hint = spec.hints[method.name];
-  console.log(hint)
+  const hint =
+    method.name in spec.hints ? spec.hints[method.name] : ({} as Hint);
 
   callArgs.push(
     factory.createCallExpression(
@@ -212,40 +214,89 @@ function generateMethodImpl(
     )
   );
 
+
   for (const arg of method.args) {
-    let argType: ts.TypeNode;
-    if (hint.structs !== undefined && arg.name in hint.structs) {
-      // Its got a struct def, so we should specify the struct type in args and
-      // get the values when we call `call`
-      argType = factory.createTypeReferenceNode(hint.structs[arg.name].name);
-      abiMethodArgs.push(
-        factory.createPropertyAssignment(
-          factory.createIdentifier(arg.name),
-          factory.createIdentifier(arg.name)
-        )
-      );
-    } else {
-      argType = tsTypeFromAbiType(arg.type.toString());
-      abiMethodArgs.push(
-        factory.createPropertyAssignment(
-          factory.createIdentifier(arg.name),
-          factory.createIdentifier(arg.name)
-        )
+    const argName: ts.Identifier = factory.createIdentifier(arg.name);
+
+    const argType: ts.TypeNode =
+      hint.structs !== undefined && arg.name in hint.structs
+        ? factory.createTypeReferenceNode(hint.structs[arg.name].name)
+        : tsTypeFromAbiType(arg.type.toString());
+
+    const defaultArg =
+      hint.default_arguments !== undefined && arg.name in hint.default_arguments
+        ? hint.default_arguments[arg.name]
+        : undefined;
+
+    let argVal: ts.Expression = factory.createIdentifier(`args.${arg.name}`);
+    if (defaultArg !== undefined) {
+      let data: ts.Expression;
+      if (typeof defaultArg.data == "string") {
+        data = factory.createStringLiteral(defaultArg.data);
+      } else if (typeof defaultArg.data == "bigint") {
+        data = factory.createBigIntLiteral(defaultArg.data.toString());
+      } else if (typeof defaultArg.data == "number") {
+        data = factory.createNumericLiteral(defaultArg.data);
+      }
+
+      argVal = factory.createConditionalExpression(
+        factory.createBinaryExpression(
+          argVal,
+          factory.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
+          factory.createIdentifier("undefined")
+        ),
+        factory.createToken(ts.SyntaxKind.QuestionToken),
+        factory.createAwaitExpression(
+          factory.createCallExpression(
+            factory.createIdentifier("this.resolve"),
+            undefined,
+            [factory.createStringLiteral(defaultArg.source), data]
+          )
+        ),
+        factory.createToken(ts.SyntaxKind.ColonToken),
+        argVal 
       );
     }
 
-    const typeParams = factory.createParameterDeclaration(
-      undefined,
-      undefined,
-      undefined,
-      arg.name,
-      undefined,
-      argType,
-      undefined
-    );
+    abiMethodArgs.push(factory.createPropertyAssignment(argName, argVal));
 
-    params.push(typeParams);
+    const optional =
+      defaultArg !== undefined
+        ? factory.createToken(ts.SyntaxKind.QuestionToken)
+        : undefined;
+
+    //factory.createPropertyDeclaration
+    argParams.push(
+      factory.createPropertySignature(
+        undefined,
+        arg.name,
+        optional,
+        argType,
+      )
+    );
   }
+
+  // Expect args
+  params.push(factory.createParameterDeclaration(
+    undefined,
+    undefined,
+    undefined,
+    factory.createIdentifier("args"),
+    undefined,
+    factory.createTypeLiteralNode(argParams),
+  ))
+
+  // Any tx overrides
+
+  const txnParams = factory.createIdentifier("txnParams")
+  params.push(factory.createParameterDeclaration(
+    undefined,
+    undefined,
+    undefined,
+    txnParams,
+    factory.createToken(ts.SyntaxKind.QuestionToken),
+    factory.createTypeReferenceNode("TransactionOverrides")
+  ))
 
   // Set up return type
   let abiRetType: ts.TypeNode = factory.createKeywordTypeNode(
@@ -274,16 +325,16 @@ function generateMethodImpl(
           ]
         )
       );
-    }else {
+    } else {
       resultArgs.push(
         factory.createAsExpression(
-            factory.createPropertyAccessExpression(
-              factory.createIdentifier("result"),
-              factory.createIdentifier("returnValue")
-            ),
-            abiRetType
+          factory.createPropertyAccessExpression(
+            factory.createIdentifier("result"),
+            factory.createIdentifier("returnValue")
+          ),
+          abiRetType
         )
-      )  
+      );
     }
   }
 
@@ -307,6 +358,7 @@ function generateMethodImpl(
                   [
                     ...callArgs,
                     factory.createObjectLiteralExpression(abiMethodArgs),
+                    txnParams
                   ]
                 )
               )
@@ -329,11 +381,16 @@ function generateMethodImpl(
   let retType = factory.createTypeReferenceNode(
     factory.createIdentifier("Promise"),
     [
-      factory.createTypeReferenceNode(factory.createIdentifier("ABIResult"), [
-        abiRetType,
-      ]),
+      factory.createTypeReferenceNode(
+        factory.createIdentifier("ABIResult"), 
+        [abiRetType]
+      ),
     ]
   );
+
+  //const parameters = [
+  //  factory.createObjectBindingPattern()
+  //]
 
   const methodSpec = factory.createMethodDeclaration(
     undefined,

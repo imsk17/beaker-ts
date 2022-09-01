@@ -16,6 +16,8 @@ export type MethodArgs = {
 
 export type ABIReturnType = object | void | algosdk.ABIValue;
 
+export type TransactionOverrides = Partial<algosdk.TransactionParams>
+
 export function decodeNamedTuple(v: algosdk.ABIValue, keys: string[]): object {
   if (!Array.isArray(v)) throw Error("Expected array");
   if (v.length != keys.length)
@@ -140,7 +142,7 @@ export class ApplicationClient {
   }
 
   async create(
-    txParams?: algosdk.TransactionParams
+    txParams?: TransactionOverrides 
   ): Promise<[number, string, string]> {
     await this.ensurePrograms();
 
@@ -174,7 +176,7 @@ export class ApplicationClient {
     }
   }
 
-  async delete(txParams?: algosdk.TransactionParams) {
+  async delete(txParams?: TransactionOverrides) {
     const sp = await this.getSuggestedParams(txParams);
 
     const atc = new algosdk.AtomicTransactionComposer();
@@ -196,7 +198,7 @@ export class ApplicationClient {
     }
   }
 
-  async update(txParams?: algosdk.TransactionParams) {
+  async update(txParams?: TransactionOverrides) {
     await this.ensurePrograms();
 
     const sp = await this.getSuggestedParams(txParams);
@@ -221,7 +223,7 @@ export class ApplicationClient {
     }
   }
 
-  async optIn(txParams?: algosdk.TransactionParams) {
+  async optIn(txParams?: TransactionOverrides) {
     const sp = await this.getSuggestedParams(txParams);
 
     const atc = new algosdk.AtomicTransactionComposer();
@@ -242,7 +244,7 @@ export class ApplicationClient {
     }
   }
 
-  async closeOut(txParams?: algosdk.TransactionParams) {
+  async closeOut(txParams?: TransactionOverrides) {
     const sp = await this.getSuggestedParams(txParams);
 
     const atc = new algosdk.AtomicTransactionComposer();
@@ -263,7 +265,7 @@ export class ApplicationClient {
     }
   }
 
-  async clearState(txParams?: algosdk.TransactionParams) {
+  async clearState(txParams?: TransactionOverrides) {
     const sp = await this.getSuggestedParams(txParams);
 
     const atc = new algosdk.AtomicTransactionComposer();
@@ -286,7 +288,7 @@ export class ApplicationClient {
   async call(
     method: algosdk.ABIMethod,
     args?: MethodArgs,
-    txParams?: algosdk.TransactionParams
+    txParams?: TransactionOverrides 
   ): Promise<algosdk.ABIResult> {
     const atc = new algosdk.AtomicTransactionComposer();
 
@@ -303,7 +305,7 @@ export class ApplicationClient {
     atc: algosdk.AtomicTransactionComposer,
     method: algosdk.ABIMethod,
     args?: MethodArgs,
-    txParams?: algosdk.TransactionParams
+    txParams?: TransactionOverrides 
   ): Promise<algosdk.AtomicTransactionComposer> {
     const sp = await this.getSuggestedParams(txParams);
 
@@ -352,8 +354,22 @@ export class ApplicationClient {
     else return e;
   }
 
+  async resolve(source: string, data: bigint|number|string|Uint8Array): Promise<bigint|number|string|Uint8Array>{
+    switch(source){
+      case "global-state":
+        const appState = await this.getApplicationState()
+        return appState[data as string]
+      case "local-state":
+        return 0
+      case "abi-method":
+        return 0
+      default:
+        return data
+    }
+  }
+
   async getSuggestedParams(
-    txParams?: algosdk.TransactionParams
+    txParams?: TransactionOverrides
   ): Promise<algosdk.SuggestedParams> {
     if (txParams !== undefined && txParams.suggestedParams !== undefined)
       return txParams.suggestedParams;

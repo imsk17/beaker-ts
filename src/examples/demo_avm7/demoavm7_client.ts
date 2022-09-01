@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides} from "../..";
 export class BlockDetails {
     ts: bigint;
     seed: Uint8Array;
@@ -41,36 +41,55 @@ export class DemoAVM7 extends ApplicationClient {
         new algosdk.ABIMethod({ name: "json_ref", desc: "", args: [{ type: "string", name: "json_str", desc: "" }], returns: { type: "(string,uint64,string)", desc: "" } }),
         new algosdk.ABIMethod({ name: "vrf_verify", desc: "", args: [{ type: "byte[]", name: "msg", desc: "" }, { type: "byte[80]", name: "proof", desc: "" }, { type: "address", name: "pub_key", desc: "" }], returns: { type: "byte[64]", desc: "" } })
     ];
-    async replace(orig: string, start: bigint, replace_with: string): Promise<ABIResult<string>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "replace"), { orig: orig, start: start, replace_with: replace_with });
+    async replace(args: {
+        orig: string;
+        start: bigint;
+        replace_with: string;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<string>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "replace"), { orig: args.orig, start: args.start, replace_with: args.replace_with }, txnParams);
         return new ABIResult<string>(result, result.returnValue as string);
     }
-    async sha3_256(to_hash: string): Promise<ABIResult<Uint8Array>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "sha3_256"), { to_hash: to_hash });
+    async sha3_256(args: {
+        to_hash: string;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<Uint8Array>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "sha3_256"), { to_hash: args.to_hash }, txnParams);
         return new ABIResult<Uint8Array>(result, result.returnValue as Uint8Array);
     }
-    async noop(): Promise<ABIResult<void>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "noop"), {});
+    async noop(args: {}, txnParams?: TransactionOverrides): Promise<ABIResult<void>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "noop"), {}, txnParams);
         return new ABIResult<void>(result);
     }
-    async block(round: bigint): Promise<ABIResult<BlockDetails>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "block"), { round: round });
+    async block(args: {
+        round: bigint;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<BlockDetails>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "block"), { round: args.round }, txnParams);
         return new ABIResult<BlockDetails>(result, BlockDetails.decodeResult(result.returnValue));
     }
-    async ed25519verify_bare(msg: string, sig: Uint8Array): Promise<ABIResult<boolean>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "ed25519verify_bare"), { msg: msg, sig: sig });
+    async ed25519verify_bare(args: {
+        msg: string;
+        sig: Uint8Array;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<boolean>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "ed25519verify_bare"), { msg: args.msg, sig: args.sig }, txnParams);
         return new ABIResult<boolean>(result, result.returnValue as boolean);
     }
-    async b64decode(b64encoded: string): Promise<ABIResult<string>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "b64decode"), { b64encoded: b64encoded });
+    async b64decode(args: {
+        b64encoded: string;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<string>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "b64decode"), { b64encoded: args.b64encoded }, txnParams);
         return new ABIResult<string>(result, result.returnValue as string);
     }
-    async json_ref(json_str: string): Promise<ABIResult<JsonExampleResult>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "json_ref"), { json_str: json_str });
+    async json_ref(args: {
+        json_str: string;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<JsonExampleResult>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "json_ref"), { json_str: args.json_str }, txnParams);
         return new ABIResult<JsonExampleResult>(result, JsonExampleResult.decodeResult(result.returnValue));
     }
-    async vrf_verify(msg: Uint8Array, proof: Uint8Array, pub_key: string): Promise<ABIResult<Uint8Array>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "vrf_verify"), { msg: msg, proof: proof, pub_key: pub_key });
+    async vrf_verify(args: {
+        msg: Uint8Array;
+        proof: Uint8Array;
+        pub_key: string;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<Uint8Array>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "vrf_verify"), { msg: args.msg, proof: args.proof, pub_key: args.pub_key }, txnParams);
         return new ABIResult<Uint8Array>(result, result.returnValue as Uint8Array);
     }
 }

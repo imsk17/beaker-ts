@@ -22,21 +22,21 @@ import { ConstantProductAMM } from "./constantproductamm_client";
   console.log(`Created app ${appId} with address ${appAddr} in tx ${txId}`);
 
   // Bootstrap the app with assets we're using
-  const bootstrapResult = await appClient.bootstrap(
-    algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+  const bootstrapResult = await appClient.bootstrap({
+    seed: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddr,
       suggestedParams: await appClient.client.getTransactionParams().do(),
       amount: BigInt(1e6),
     }),
-    assetA,
-    assetB
-  );
-  // Can get the createdAsset from the inners 
-  console.log(bootstrapResult.inners[0].createdAsset)
+    a_asset: assetA,
+    b_asset: assetB
+  });
 
   // The return value is the id of the pool token
   const poolToken = bootstrapResult.value
+  // Can get the createdAsset from the inners 
+  console.log(bootstrapResult.inners[0].createdAsset)
 
   // Opt user into new pool token
   const optInToAsset = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
@@ -50,68 +50,69 @@ import { ConstantProductAMM } from "./constantproductamm_client";
    await algosdk.waitForConfirmation(appClient.client, optInToAsset.txID(), 4)
 
    // Fund the pool with initial liquidity
-  const fundResult = await appClient.mint(
-    algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: acct.addr,
-      to: appAddr,
-      suggestedParams: await appClient.client.getTransactionParams().do(),
-      amount: BigInt(1e8),
-      assetIndex: Number(assetA),
-    }),
-    algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-      from: acct.addr,
-      to: appAddr,
-      suggestedParams: await appClient.client.getTransactionParams().do(),
-      amount: BigInt(1e6),
-      assetIndex: Number(assetB),
-    }),
-    poolToken,
-    assetA,
-    assetB
-  )
+  const fundResult = await appClient.mint({
+      a_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+        from: acct.addr,
+        to: appAddr,
+        suggestedParams: await appClient.client.getTransactionParams().do(),
+        amount: BigInt(1e8),
+        assetIndex: Number(assetA),
+      }),
+      b_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+        from: acct.addr,
+        to: appAddr,
+        suggestedParams: await appClient.client.getTransactionParams().do(),
+        amount: BigInt(1e6),
+        assetIndex: Number(assetB),
+      }),
+      pool_asset: poolToken,
+      a_asset: assetA,
+      b_asset: assetB
+  })
+
   console.log(`Received ${fundResult.inners[0].txn.amount} pool tokens`)
 
   // Try to swap A for B
-  const swapAtoB = await appClient.swap(
-    algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+  const swapAtoB = await appClient.swap({
+    swap_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddr,
       suggestedParams: await appClient.client.getTransactionParams().do(),
       amount: BigInt(1e3),
       assetIndex: Number(assetA),
     }),
-    assetA,
-    assetB
-  )
+    a_asset: assetA,
+    b_asset: assetB
+  })
   console.log(`Received ${swapAtoB.inners[0].txn.amount} B tokens`)
 
   // Try to swap B for A 
-  const swapBtoA = await appClient.swap(
-    algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+  const swapBtoA = await appClient.swap({
+    swap_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddr,
       suggestedParams: await appClient.client.getTransactionParams().do(),
       amount: BigInt(1e3),
       assetIndex: Number(assetB),
     }),
-    assetA,
-    assetB
-  )
+    a_asset: assetA,
+    b_asset: assetB
+  })
   console.log(`Received ${swapBtoA.inners[0].txn.amount} A tokens`)
 
   // Burn some pool tokens
-  const burnResult = await appClient.burn(
-    algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+  const burnResult = await appClient.burn({
+    pool_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddr,
       suggestedParams: await appClient.client.getTransactionParams().do(),
       amount: BigInt(10),
       assetIndex: Number(poolToken),
     }),
-    poolToken,
-    assetA,
-    assetB
-  )
+    pool_asset: poolToken,
+    a_asset: assetA,
+    b_asset: assetB
+  })
   const [aRcv, bRcv] = burnResult.inners
 
   console.log(`Received ${aRcv.txn.amount} A tokens and ${bRcv.txn.amount} B tokens`)

@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides} from "../..";
 export class HelloBeaker extends ApplicationClient {
     desc: string = "";
     appSchema: Schema = { declared: {}, dynamic: {} };
@@ -9,8 +9,10 @@ export class HelloBeaker extends ApplicationClient {
     methods: algosdk.ABIMethod[] = [
         new algosdk.ABIMethod({ name: "hello", desc: "", args: [{ type: "string", name: "name", desc: "" }], returns: { type: "string", desc: "" } })
     ];
-    async hello(name: string): Promise<ABIResult<string>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "hello"), { name: name });
+    async hello(args: {
+        name: string;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<string>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "hello"), { name: args.name }, txnParams);
         return new ABIResult<string>(result, result.returnValue as string);
     }
 }

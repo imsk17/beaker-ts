@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType} from "../..";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides} from "../..";
 export class ExpensiveApp extends ApplicationClient {
     desc: string = "";
     appSchema: Schema = { declared: { opup_app_id: { type: AVMType.uint64, key: "ouaid", desc: "", static: false } }, dynamic: {} };
@@ -10,12 +10,18 @@ export class ExpensiveApp extends ApplicationClient {
         new algosdk.ABIMethod({ name: "hash_it", desc: "", args: [{ type: "string", name: "input", desc: "" }, { type: "uint64", name: "iters", desc: "" }, { type: "application", name: "opup_app", desc: "" }], returns: { type: "byte[32]", desc: "" } }),
         new algosdk.ABIMethod({ name: "opup_bootstrap", desc: "", args: [{ type: "pay", name: "ptxn", desc: "" }], returns: { type: "uint64", desc: "" } })
     ];
-    async hash_it(input: string, iters: bigint, opup_app: bigint): Promise<ABIResult<Uint8Array>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "hash_it"), { input: input, iters: iters, opup_app: opup_app });
+    async hash_it(args: {
+        input: string;
+        iters: bigint;
+        opup_app?: bigint;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<Uint8Array>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "hash_it"), { input: args.input, iters: args.iters, opup_app: args.opup_app === undefined ? await this.resolve("global-state", "ouaid") : args.opup_app }, txnParams);
         return new ABIResult<Uint8Array>(result, result.returnValue as Uint8Array);
     }
-    async opup_bootstrap(ptxn: algosdk.TransactionWithSigner | algosdk.Transaction): Promise<ABIResult<bigint>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "opup_bootstrap"), { ptxn: ptxn });
+    async opup_bootstrap(args: {
+        ptxn: algosdk.TransactionWithSigner | algosdk.Transaction;
+    }, txnParams?: TransactionOverrides): Promise<ABIResult<bigint>> {
+        const result = await this.call(algosdk.getMethodByName(this.methods, "opup_bootstrap"), { ptxn: args.ptxn }, txnParams);
         return new ABIResult<bigint>(result, result.returnValue as bigint);
     }
 }
