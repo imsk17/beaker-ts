@@ -12,13 +12,14 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     sender: acct.addr,
   });
 
+  // Create assets for demo that we'll want to use to create a pool
+  const assetA = await createAsset(appClient.client, acct, "A");
+  const assetB = await createAsset(appClient.client, acct, "B");
+  console.log(`created ${assetA}, ${assetB}`);
+
   // Deploy app on chain
   const [appId, appAddr, txId] = await appClient.create();
   console.log(`Created app ${appId} with address ${appAddr} in tx ${txId}`);
-
-  // Create assets for demo that we'll want to use to create a pool
-  const [assetA, assetB] = await createAssets(appClient.client, acct);
-  console.log(`created ${assetA}, ${assetB}`);
 
   // Bootstrap the app with assets we're using
   const bootstrapResult = await appClient.bootstrap(
@@ -31,6 +32,8 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     assetA,
     assetB
   );
+  // Can get the createdAsset from the inners 
+  console.log(bootstrapResult.inners[0].createdAsset)
 
   // The return value is the id of the pool token
   const poolToken = bootstrapResult.value
@@ -66,7 +69,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     assetA,
     assetB
   )
-  console.log(`Received ${fundResult.inners[0].aamt} pool tokens`)
+  console.log(`Received ${fundResult.inners[0].txn.amount} pool tokens`)
 
   // Try to swap A for B
   const swapAtoB = await appClient.swap(
@@ -80,7 +83,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     assetA,
     assetB
   )
-  console.log(`Received ${swapAtoB.inners[0].aamt} B tokens`)
+  console.log(`Received ${swapAtoB.inners[0].txn.amount} B tokens`)
 
   // Try to swap B for A 
   const swapBtoA = await appClient.swap(
@@ -94,7 +97,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     assetA,
     assetB
   )
-  console.log(`Received ${swapBtoA.inners[0].aamt} A tokens`)
+  console.log(`Received ${swapBtoA.inners[0].txn.amount} A tokens`)
 
   // Burn some pool tokens
   const burnResult = await appClient.burn(
@@ -111,52 +114,28 @@ import { ConstantProductAMM } from "./constantproductamm_client";
   )
   const [aRcv, bRcv] = burnResult.inners
 
-  console.log(`Received ${aRcv.aamt} A tokens and ${bRcv.aamt} B tokens`)
+  console.log(`Received ${aRcv.txn.amount} A tokens and ${bRcv.txn.amount} B tokens`)
 
 })();
 
-async function createAssets(
+async function createAsset(
   client: algosdk.Algodv2,
-  acct: SandboxAccount
-): Promise<[bigint, bigint]> {
-  const sp = await client.getTransactionParams().do();
-  const createA = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
+  acct: SandboxAccount,
+  unitName: string,
+): Promise<bigint> {
+  const create = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
     from: acct.addr,
-    suggestedParams: sp,
+    suggestedParams: await client.getTransactionParams().do(),
     total: BigInt(1e10),
     decimals: 0,
     defaultFrozen: false,
-    assetName: "Asset A",
-    unitName: "a",
+    assetName: `Asset ${unitName}`,
+    unitName: unitName,
   });
+  await client.sendRawTransaction(create.signTxn(acct.privateKey)).do();
 
-  const createB = algosdk.makeAssetCreateTxnWithSuggestedParamsFromObject({
-    from: acct.addr,
-    suggestedParams: sp,
-    total: BigInt(1e9),
-    decimals: 0,
-    defaultFrozen: false,
-    assetName: "Asset B",
-    unitName: "b",
-  });
+  const result = await algosdk.waitForConfirmation( client, create.txID(), 4);
 
-  const groupedTxns = algosdk.assignGroupID([createA, createB]);
-  const signedTxns = groupedTxns.map((txn) => {
-    return txn.signTxn(acct.privateKey);
-  });
+  return BigInt(result["asset-index"]);
 
-  await client.sendRawTransaction(signedTxns).do();
-
-  const aResult = await algosdk.waitForConfirmation(
-    client,
-    groupedTxns[0].txID(),
-    4
-  );
-  const bResult = await algosdk.waitForConfirmation(
-    client,
-    groupedTxns[1].txID(),
-    4
-  );
-
-  return [BigInt(aResult["asset-index"]), BigInt(bResult["asset-index"])];
 }

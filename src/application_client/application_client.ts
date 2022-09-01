@@ -1,36 +1,51 @@
-import algosdk, { ABIValue, EncodedTransaction, SuggestedParams, TransactionParams } from "algosdk";
+import algosdk from "algosdk";
 
 import { getStateSchema, Schema } from "../";
 import { parseLogicError, LogicError } from "./logic_error";
-import { ApplicationState, AccountState, decodeState } from "./state"
+import { ApplicationState, AccountState, decodeState } from "./state";
 
-export type MethodArg = algosdk.ABIArgument | algosdk.Transaction | object | MethodArg[];
+export type MethodArg =
+  | algosdk.ABIArgument
+  | algosdk.Transaction
+  | object
+  | MethodArg[];
 
 export type MethodArgs = {
-  [key: string]: MethodArg
+  [key: string]: MethodArg;
 };
 
-export type ABIReturnType = object | void | algosdk.ABIValue
+export type ABIReturnType = object | void | algosdk.ABIValue;
 
-export function decodeNamedTuple(v: ABIValue, keys: string[]): object {
-  if(!Array.isArray(v)) throw Error("Expected array")
-  if(v.length != keys.length) throw Error("Different key length than value length")
+export function decodeNamedTuple(v: algosdk.ABIValue, keys: string[]): object {
+  if (!Array.isArray(v)) throw Error("Expected array");
+  if (v.length != keys.length)
+    throw Error("Different key length than value length");
 
-  return Object.fromEntries(keys.map((key, idx)=>{ return [key, v[idx]]}))
+  return Object.fromEntries(
+    keys.map((key, idx) => {
+      return [key, v[idx]];
+    })
+  );
+}
+
+export interface InnerTransaction {
+  txn: algosdk.Transaction;
+  createdAsset?: bigint;
+  createdApp?: bigint;
 }
 
 export class ABIResult<T extends ABIReturnType> {
   txID: string;
   rawReturnValue: Uint8Array;
   method: algosdk.ABIMethod;
-  returnValue: ABIValue;
+  returnValue: algosdk.ABIValue;
   decodeError?: Error;
   txInfo?: Record<string, any>;
 
   value: T;
-  inners: Record<string, any>[];
+  inners: InnerTransaction[];
 
-  constructor(result: algosdk.ABIResult | undefined, value?: T){
+  constructor(result: algosdk.ABIResult | undefined, value?: T) {
     this.txID = result.txID;
     this.rawReturnValue = result.rawReturnValue;
     this.method = result.method;
@@ -38,23 +53,27 @@ export class ABIResult<T extends ABIReturnType> {
     this.txInfo = result.txInfo;
 
     this.inners = [];
-    if (result.txInfo !== undefined && 'inner-txns' in result.txInfo){
-      const outer = result.txInfo['txn']['txn'] as EncodedTransaction
-      this.inners = result.txInfo['inner-txns'].map((itxn: any)=>{
-        const et = itxn['txn']['txn'] as EncodedTransaction
-        et.gen = outer.gen 
-        et.gh = outer.gh 
-        return algosdk.Transaction.from_obj_for_encoding(itxn['txn']['txn'] as EncodedTransaction)
-      })
+    if (result.txInfo !== undefined && "inner-txns" in result.txInfo) {
+      // TODO: this only parses 1 level deep
+      const outer = result.txInfo["txn"]["txn"] as algosdk.EncodedTransaction;
+      this.inners = result.txInfo["inner-txns"].map((itxn: any) => {
+        const et = itxn["txn"]["txn"] as algosdk.EncodedTransaction;
+        et.gen = outer.gen;
+        et.gh = outer.gh;
+        return {
+          createdAsset: itxn['asset-index'] as bigint,
+          createdApp: itxn['application-index'],
+          txn: algosdk.Transaction.from_obj_for_encoding(
+            itxn["txn"]["txn"] as algosdk.EncodedTransaction
+          ),
+        } as InnerTransaction;
+      });
     }
 
-
-    this.returnValue = result.returnValue
-    this.value = value 
+    this.returnValue = result.returnValue;
+    this.value = value;
   }
-
 }
-
 
 export class ApplicationClient {
   client: algosdk.Algodv2;
@@ -120,7 +139,9 @@ export class ApplicationClient {
     }
   }
 
-  async create(txParams?: algosdk.TransactionParams): Promise<[number, string, string]> {
+  async create(
+    txParams?: algosdk.TransactionParams
+  ): Promise<[number, string, string]> {
     await this.ensurePrograms();
 
     const sp = await this.getSuggestedParams(txParams);
@@ -178,7 +199,7 @@ export class ApplicationClient {
   async update(txParams?: algosdk.TransactionParams) {
     await this.ensurePrograms();
 
-    const sp = await this.getSuggestedParams(txParams)
+    const sp = await this.getSuggestedParams(txParams);
 
     const atc = new algosdk.AtomicTransactionComposer();
     atc.addTransaction({
@@ -267,17 +288,15 @@ export class ApplicationClient {
     args?: MethodArgs,
     txParams?: algosdk.TransactionParams
   ): Promise<algosdk.ABIResult> {
-
     const atc = new algosdk.AtomicTransactionComposer();
 
-    await this.addMethodCall(atc, method, args, txParams)
+    await this.addMethodCall(atc, method, args, txParams);
 
     try {
       return (await atc.execute(this.client, 4)).methodResults.pop();
     } catch (e) {
       throw this.wrapLogicError(e);
     }
-
   }
 
   async addMethodCall(
@@ -286,12 +305,10 @@ export class ApplicationClient {
     args?: MethodArgs,
     txParams?: algosdk.TransactionParams
   ): Promise<algosdk.AtomicTransactionComposer> {
-
     const sp = await this.getSuggestedParams(txParams);
 
     const processedArgs: algosdk.ABIArgument[] = [];
     for (const expected_arg of method.args) {
-
       if (!(expected_arg.name in args)) {
         // Error! (or check hints)
         throw new Error(`Cant find required argument: ${expected_arg.name}`);
@@ -300,9 +317,12 @@ export class ApplicationClient {
       let arg = args[expected_arg.name];
 
       if (arg instanceof algosdk.Transaction) {
-        arg = { txn: arg, signer: this.signer } as algosdk.TransactionWithSigner;
-      } else if(arg instanceof Object){
-        arg = Object.values(arg)
+        arg = {
+          txn: arg,
+          signer: this.signer,
+        } as algosdk.TransactionWithSigner;
+      } else if (arg instanceof Object) {
+        arg = Object.values(arg);
       }
 
       processedArgs.push(arg as algosdk.ABIArgument);
@@ -318,7 +338,7 @@ export class ApplicationClient {
       ...txParams,
     });
 
-    return atc
+    return atc;
   }
 
   wrapLogicError(e: Error): Error {
@@ -332,25 +352,42 @@ export class ApplicationClient {
     else return e;
   }
 
-  async getSuggestedParams(txParams?: algosdk.TransactionParams): Promise<algosdk.SuggestedParams> {
-    if(txParams !== undefined && txParams.suggestedParams !== undefined)  return txParams.suggestedParams
+  async getSuggestedParams(
+    txParams?: algosdk.TransactionParams
+  ): Promise<algosdk.SuggestedParams> {
+    if (txParams !== undefined && txParams.suggestedParams !== undefined)
+      return txParams.suggestedParams;
     return await this.client.getTransactionParams().do();
   }
 
-
   async getApplicationState(raw?: boolean): Promise<ApplicationState> {
-    const appInfo = await this.client.getApplicationByID(this.appId).do()
-    if (!('params' in appInfo) || !('global-state' in appInfo['params'])) throw Error("No global state found")
-    return decodeState(appInfo['params']['global-state'], raw) as ApplicationState
+    const appInfo = await this.client.getApplicationByID(this.appId).do();
+    if (!("params" in appInfo) || !("global-state" in appInfo["params"]))
+      throw Error("No global state found");
+    return decodeState(
+      appInfo["params"]["global-state"],
+      raw
+    ) as ApplicationState;
   }
 
-  async getAccountState(address?: string, raw?: boolean): Promise<AccountState> {
-    if(address === undefined) address = this.getSender()
-    const acctInfo = await this.client.accountApplicationInformation(address, this.appId).do()
-    if (!('app-local-state' in acctInfo) || !('key-value' in acctInfo['app-local-state'])) throw Error("No global state found")
-    return decodeState(acctInfo['app-local-state']['key-value'], raw) as ApplicationState
+  async getAccountState(
+    address?: string,
+    raw?: boolean
+  ): Promise<AccountState> {
+    if (address === undefined) address = this.getSender();
+    const acctInfo = await this.client
+      .accountApplicationInformation(address, this.appId)
+      .do();
+    if (
+      !("app-local-state" in acctInfo) ||
+      !("key-value" in acctInfo["app-local-state"])
+    )
+      throw Error("No global state found");
+    return decodeState(
+      acctInfo["app-local-state"]["key-value"],
+      raw
+    ) as ApplicationState;
   }
-
 
   private getSender(): string {
     return this.sender;
@@ -371,5 +408,4 @@ export class ApplicationClient {
     const s = getStateSchema(this.appSchema);
     return { numGlobalInts: s.uints, numGlobalByteSlices: s.bytes };
   }
-
 }
