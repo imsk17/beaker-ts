@@ -18,10 +18,8 @@ class App(Application):
 
 #...
 
-app_client = ApplicationClient(algod_client, App(), signer=signer)
 with open("app.json", "w") as f:
-  f.write(json.dumps(app_client.application_spec()))
-
+  f.write(json.dumps(App.application_spec()))
 ```
 
 ## Generate a TypeScript Client
