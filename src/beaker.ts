@@ -21,7 +21,7 @@ program
   .arguments("<path-to-spec> <path-to-write>")
   .option("-l, --local", "whether or not to use local import")
   .action((specPath, srcPath, options) => {
-    const importPath = options?'../..':undefined
+    const importPath = options.local?'../..':undefined
 
     if (srcPath.slice(-1) !== path.sep) srcPath += path.sep;
 
