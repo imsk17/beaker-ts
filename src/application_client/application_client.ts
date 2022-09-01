@@ -287,14 +287,13 @@ export class ApplicationClient {
 
       if (arg instanceof algosdk.Transaction) {
         arg = { txn: arg, signer: this.signer } as algosdk.TransactionWithSigner;
-      }
-
-      if(arg instanceof Object){
+      } else if(arg instanceof Object){
         arg = Object.values(arg)
       }
 
       processedArgs.push(arg as algosdk.ABIArgument);
     }
+
 
     atc.addMethodCall({
       appID: this.appId,

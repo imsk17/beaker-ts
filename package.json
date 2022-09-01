@@ -1,6 +1,6 @@
 {
   "name": "beaker-ts",
-  "version": "0.0.9",
+  "version": "0.0.11",
   "description": "",
   "main": "./lib/index.js",
   "scripts": {
@@ -8,6 +8,8 @@
     "hello": "npx ts-node src/examples/hello/hello_client_example.ts",
     "structer": "npx ts-node src/examples/struct/structer_client_example.ts",
     "avm7": "npx ts-node src/examples/demo_avm7/demo_avm7_example.ts",
+    "amm": "npx ts-node src/examples/amm/index.ts",
+
     
 
     "build": "tsc -p .",
