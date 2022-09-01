@@ -215,7 +215,7 @@ function generateMethodImpl(
   );
 
   for (const arg of method.args) {
-    let argType;
+    let argType: ts.TypeNode;
     if (hint.structs !== undefined && arg.name in hint.structs) {
       // Its got a struct def, so we should specify the struct type in args and
       // get the values when we call `call`
@@ -276,6 +276,16 @@ function generateMethodImpl(
           ]
         )
       );
+    }else {
+      resultArgs.push(
+        factory.createAsExpression(
+            factory.createPropertyAccessExpression(
+              factory.createIdentifier("result"),
+              factory.createIdentifier("returnValue")
+            ),
+            abiRetType
+        )
+      )  
     }
   }
 

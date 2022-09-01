@@ -15,7 +15,7 @@ export class ConstantProductAMM extends ApplicationClient {
     ];
     async bootstrap(seed: algosdk.TransactionWithSigner | algosdk.Transaction, a_asset: bigint, b_asset: bigint): Promise<ABIResult<bigint>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "bootstrap"), { seed: seed, a_asset: a_asset, b_asset: b_asset });
-        return new ABIResult<bigint>(result);
+        return new ABIResult<bigint>(result, result.returnValue as bigint);
     }
     async burn(pool_xfer: algosdk.TransactionWithSigner | algosdk.Transaction, pool_asset: bigint, a_asset: bigint, b_asset: bigint): Promise<ABIResult<void>> {
         const result = await this.call(algosdk.getMethodByName(this.methods, "burn"), { pool_xfer: pool_xfer, pool_asset: pool_asset, a_asset: a_asset, b_asset: b_asset });
