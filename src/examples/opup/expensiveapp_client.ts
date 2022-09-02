@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides} from "../..";
+import {ApplicationClient, ABIResult, Schema, AVMType, TransactionOverrides} from "../..";
 export class ExpensiveApp extends ApplicationClient {
     desc: string = "";
     override appSchema: Schema = { declared: { opup_app_id: { type: AVMType.uint64, key: "ouaid", desc: "", static: false } }, dynamic: {} };

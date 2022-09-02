@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides} from "../..";
+import {ApplicationClient, ABIResult,  Schema,  TransactionOverrides} from "../..";
 export class HelloBeaker extends ApplicationClient {
     desc: string = "";
     override appSchema: Schema = { declared: {}, dynamic: {} };

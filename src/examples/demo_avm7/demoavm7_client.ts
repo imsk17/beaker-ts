@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides} from "../..";
+import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, TransactionOverrides} from "../..";
 export class BlockDetails {
     ts: bigint = BigInt(0);
     seed: Uint8Array = new Uint8Array();
@@ -56,7 +56,7 @@ export class DemoAVM7 extends ApplicationClient {
         return new ABIResult<Uint8Array>(result, result.returnValue as Uint8Array);
     }
     async noop(args: {}, txnParams?: TransactionOverrides): Promise<ABIResult<void>> {
-        const result = await this.call(algosdk.getMethodByName(this.methods, "noop"), {}, txnParams);
+        const result = await this.call(algosdk.getMethodByName(this.methods, "noop"), args, txnParams);
         return new ABIResult<void>(result);
     }
     async block(args: {

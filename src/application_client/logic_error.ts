@@ -1,4 +1,4 @@
-import algosdk from 'algosdk'
+import type algosdk from 'algosdk'
 
 const LOGIC_ERROR = /TransactionPool.Remember: transaction ([A-Z0-9]+): logic eval error: (.*). Details: pc=([0-9]+), opcodes=.*/
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import { generateApplicationClient, AppSpec } from ".";
+import { generateApplicationClient } from ".";
 
 import * as fs from "fs";
 import * as path from "path";

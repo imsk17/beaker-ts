@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import { SandboxAccount } from "../../sandbox/accounts";
+import type { SandboxAccount } from "../../sandbox/accounts";
 import { getAccounts, getAlgodClient } from "../../";
 import { ConstantProductAMM } from "./constantproductamm_client";
 
@@ -51,7 +51,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
    await algosdk.waitForConfirmation(appClient.client, optInToAsset.txID(), 4)
 
    // Fund the pool with initial liquidity
-  const fundResult = await appClient.mint({
+  let result = await appClient.mint({
       a_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
         from: acct.addr,
         to: appAddr,
@@ -71,11 +71,11 @@ import { ConstantProductAMM } from "./constantproductamm_client";
       b_asset: assetB
   })
   let amt: number|bigint|undefined = 0
-  if(fundResult.inners.length>0) amt = fundResult.inners[0]?.txn.amount
+  if(result.inners.length>0) amt = result.inners[0]?.txn.amount
   console.log(`Received ${amt} pool tokens`)
 
   // Try to swap A for B
-  const swapAtoB = await appClient.swap({
+  result = await appClient.swap({
     swap_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddr,
@@ -89,7 +89,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
   //console.log(`Received ${swapAtoB.inners[0].txn.amount} B tokens`)
 
   // Try to swap B for A 
-  const swapBtoA = await appClient.swap({
+  result = await appClient.swap({
     swap_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddr,
@@ -103,7 +103,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
   //console.log(`Received ${swapBtoA.inners[0].txn.amount} A tokens`)
 
   // Burn some pool tokens
-  const burnResult = await appClient.burn({
+  result = await appClient.burn({
     pool_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddr,
@@ -115,7 +115,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     a_asset: assetA,
     b_asset: assetB
   })
-  const [aRx, bRx] = burnResult.inners
+  const [aRx, bRx] = result.inners
 
   console.log(`Received ${aRx?.txn.amount} A tokens and ${bRx?.txn.amount} B tokens`)
 

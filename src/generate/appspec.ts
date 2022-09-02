@@ -1,4 +1,4 @@
-import algosdk from "algosdk";
+import type algosdk from "algosdk";
 
 export enum AVMType {
   uint64,

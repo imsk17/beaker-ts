@@ -409,7 +409,7 @@ export class ApplicationClient {
   async resolve(
     source: string,
     data: bigint | number | string | Uint8Array
-  ): Promise<bigint | number | string | Uint8Array> {
+  ): Promise<MethodArg> {
     switch (source) {
       case "global-state":
         const appState = await this.getApplicationState();
