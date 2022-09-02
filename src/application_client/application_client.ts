@@ -9,13 +9,8 @@ export type MethodArg =
   | algosdk.Transaction
   | object
   | MethodArg[];
-
-export type MethodArgs = {
-  [key: string]: MethodArg;
-};
-
+export type MethodArgs = Record<string, MethodArg>;
 export type ABIReturnType = object | void | algosdk.ABIValue;
-
 export type TransactionOverrides = Partial<algosdk.TransactionParams>;
 
 export function decodeNamedTuple(
