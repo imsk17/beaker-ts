@@ -23,6 +23,7 @@ export class LogicError extends Error {
     led: LogicErrorDetails;
     program: string[];
     lines: number = 5;
+    teal_line: number=0;
     stack?: string;
 
     constructor(led: LogicErrorDetails, program: string[], map: algosdk.SourceMap){
@@ -31,12 +32,14 @@ export class LogicError extends Error {
         this.program = program
 
         const line = map.getLineForPc(led.pc)
+        this.teal_line = line === undefined?0:line
+
         this.message = `Logic Exception at line ${line}`
 
-        if(line>0){
+        if(this.teal_line>0){
 
-            const start = line>this.lines?line-this.lines:0
-            const stop = program.length>line+this.lines?line+this.lines:program.length
+            const start = this.teal_line>this.lines?this.teal_line-this.lines:0
+            const stop = program.length>this.teal_line+this.lines?this.teal_line+this.lines:program.length
 
             const stack_lines = program.slice(start,stop)
 

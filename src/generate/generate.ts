@@ -34,6 +34,99 @@ const TXN_TYPES: string[] = [
   "frz",
 ];
 
+function tsTypeFromAbiType(argType: string | algosdk.ABIType): ts.TypeNode {
+  if (typeof argType === "string") {
+    if (TXN_TYPES.includes(argType))
+      return factory.createUnionTypeNode([
+        factory.createTypeReferenceNode("algosdk.TransactionWithSigner"),
+        factory.createTypeReferenceNode("algosdk.Transaction"),
+      ]);
+
+    if (REF_TYPES.includes(argType)) {
+      if (["application", "asset"].includes(argType))
+        return factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword);
+
+      return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+    }
+  }
+
+  const abiType =
+    typeof argType === "string" ? algosdk.ABIType.from(argType) : argType;
+  switch (abiType.constructor) {
+    case algosdk.ABIByteType:
+      return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
+    case algosdk.ABIUintType:
+    case algosdk.ABIUfixedType:
+      return factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword);
+    case algosdk.ABIAddressType:
+    case algosdk.ABIStringType:
+      return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+    case algosdk.ABIBoolType:
+      return factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+    case algosdk.ABIArrayStaticType:
+      const asStaticArr = abiType as algosdk.ABIArrayStaticType;
+      switch (asStaticArr.childType.constructor) {
+        // If its bytes, make it a uint8array
+        case algosdk.ABIByteType:
+          return factory.createTypeReferenceNode(
+            factory.createIdentifier("Uint8Array")
+          );
+      }
+
+      return factory.createArrayTypeNode(
+        tsTypeFromAbiType(asStaticArr.childType)
+      );
+    case algosdk.ABIArrayDynamicType:
+      const asArr = abiType as algosdk.ABIArrayStaticType;
+
+      switch (asArr.childType.constructor) {
+        // If its bytes, make it a uint8array
+        case algosdk.ABIByteType:
+          return factory.createTypeReferenceNode(
+            factory.createIdentifier("Uint8Array")
+          );
+      }
+
+      return factory.createArrayTypeNode(tsTypeFromAbiType(asArr.childType));
+
+    case algosdk.ABITupleType:
+      const asTuple = abiType as algosdk.ABITupleType;
+      return factory.createTupleTypeNode(
+        asTuple.childTypes.map((elem: algosdk.ABIType) => {
+          return tsTypeFromAbiType(elem);
+        })
+      );
+  }
+
+  return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
+}
+
+function defaultValueFromTsType(t: ts.TypeNode): ts.Expression {
+  switch(t.kind){
+    case ts.SyntaxKind.StringKeyword:
+      return factory.createStringLiteral("")
+    case ts.SyntaxKind.NumberKeyword:
+      return factory.createNumericLiteral(0)
+    case ts.SyntaxKind.BigIntKeyword:
+      return factory.createCallExpression(
+          factory.createIdentifier("BigInt"),
+          undefined,
+          [factory.createNumericLiteral("0")]
+        )
+    case ts.SyntaxKind.BooleanKeyword:
+      return factory.createIdentifier("false");
+    case ts.SyntaxKind.TypeReference:
+      return factory.createNewExpression(
+        factory.createIdentifier("Uint8Array"),
+        undefined,
+        []
+      )
+  }
+  console.log(t)
+  console.log(t.kind)
+  return  factory.createIdentifier("undefined")
+}
+
 export function generateApplicationClient(
   appSpec: AppSpec,
   path: string,
@@ -121,72 +214,6 @@ function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
   );
 }
 
-function tsTypeFromAbiType(argType: string | algosdk.ABIType): ts.TypeNode {
-  if (typeof argType === "string") {
-    if (TXN_TYPES.includes(argType))
-      return factory.createUnionTypeNode([
-        factory.createTypeReferenceNode("algosdk.TransactionWithSigner"),
-        factory.createTypeReferenceNode("algosdk.Transaction"),
-      ]);
-
-    if (REF_TYPES.includes(argType)) {
-      if (["application", "asset"].includes(argType))
-        return factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword);
-
-      return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-    }
-  }
-
-  const abiType =
-    typeof argType === "string" ? algosdk.ABIType.from(argType) : argType;
-  switch (abiType.constructor) {
-    case algosdk.ABIByteType:
-      return factory.createKeywordTypeNode(ts.SyntaxKind.NumberKeyword);
-    case algosdk.ABIUintType:
-    case algosdk.ABIUfixedType:
-      return factory.createKeywordTypeNode(ts.SyntaxKind.BigIntKeyword);
-    case algosdk.ABIAddressType:
-    case algosdk.ABIStringType:
-      return factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-    case algosdk.ABIBoolType:
-      return factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
-    case algosdk.ABIArrayStaticType:
-      const asStaticArr = abiType as algosdk.ABIArrayStaticType;
-      switch (asStaticArr.childType.constructor) {
-        // If its bytes, make it a uint8array
-        case algosdk.ABIByteType:
-          return factory.createTypeReferenceNode(
-            factory.createIdentifier("Uint8Array")
-          );
-      }
-
-      return factory.createArrayTypeNode(
-        tsTypeFromAbiType(asStaticArr.childType)
-      );
-    case algosdk.ABIArrayDynamicType:
-      const asArr = abiType as algosdk.ABIArrayStaticType;
-
-      switch (asArr.childType.constructor) {
-        // If its bytes, make it a uint8array
-        case algosdk.ABIByteType:
-          return factory.createTypeReferenceNode(
-            factory.createIdentifier("Uint8Array")
-          );
-      }
-
-      return factory.createArrayTypeNode(tsTypeFromAbiType(asArr.childType));
-
-    case algosdk.ABITupleType:
-      const asTuple = abiType as algosdk.ABITupleType;
-      return factory.createTupleTypeNode(
-        asTuple.childTypes.map((elem: algosdk.ABIType) => {
-          return tsTypeFromAbiType(elem);
-        })
-      );
-  }
-
-  return factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
-}
 
 function generateMethodImpl(
   method: algosdk.ABIMethod,
@@ -216,6 +243,8 @@ function generateMethodImpl(
 
 
   for (const arg of method.args) {
+    if (arg.name === undefined) continue;
+
     const argName: ts.Identifier = factory.createIdentifier(arg.name);
 
     const argType: ts.TypeNode =
@@ -237,6 +266,8 @@ function generateMethodImpl(
         data = factory.createBigIntLiteral(defaultArg.data.toString());
       } else if (typeof defaultArg.data == "number") {
         data = factory.createNumericLiteral(defaultArg.data);
+      }else{
+        data = factory.createIdentifier("undefined")
       }
 
       argVal = factory.createConditionalExpression(
@@ -471,7 +502,7 @@ function copySchemaObject(so: Schema): ts.Expression {
 function generateStructTypes(spec: AppSpec): ts.Node[] {
   const hints = spec.hints;
 
-  const structs = {};
+  const structs: Record<string, ts.ClassDeclaration> = {};
   for (const k of Object.keys(hints)) {
     const hint = hints[k];
     if (hint.structs !== undefined) {
@@ -495,15 +526,15 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
   for (const elem of s.elements) {
     tupleNames.push(elem[0]);
     tupleTypes.push(elem[1]);
-
+    const tsType = tsTypeFromAbiType(elem[1])
     members.push(
       factory.createPropertyDeclaration(
         undefined,
         undefined,
         factory.createIdentifier(elem[0]),
         undefined,
-        tsTypeFromAbiType(elem[1]),
-        undefined
+        tsType,
+        defaultValueFromTsType(tsType)
       )
     );
   }
@@ -565,12 +596,17 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
           undefined,
           factory.createIdentifier("val"),
           undefined,
-          factory.createTypeReferenceNode(
-            factory.createQualifiedName(
-              factory.createIdentifier("algosdk"),
-              factory.createIdentifier("ABIValue")
-            ),
-            undefined
+          factory.createUnionTypeNode(
+            [
+              factory.createTypeReferenceNode(
+                factory.createQualifiedName(
+                  factory.createIdentifier("algosdk"),
+                  factory.createIdentifier("ABIValue")
+                ),
+                undefined
+              ),
+              factory.createTypeReferenceNode("undefined")
+            ]
           ),
           undefined
         ),

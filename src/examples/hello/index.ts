@@ -4,6 +4,7 @@ import {HelloBeaker} from "./hellobeaker_client";
 
 (async function () {
   const acct = (await getAccounts()).pop();
+  if (acct === undefined) return
 
   const appClient = new HelloBeaker({
     client: getAlgodClient(),
