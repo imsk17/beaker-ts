@@ -410,13 +410,24 @@ export class ApplicationClient {
     source: string,
     data: bigint | number | string | Uint8Array
   ): Promise<MethodArg> {
+    let val;
     switch (source) {
       case "global-state":
         const appState = await this.getApplicationState();
-        return appState[data as string];
+        val = appState[data as string];
+        if (val === undefined)
+          throw new Error(`no global state value: ${data}`);
+        return val;
       case "local-state":
-        return 0;
+        // TODO: how do we pass in which account to resolve against ?
+        // This assumes the current client sender
+        const acctState = await this.getAccountState();
+        val = acctState[data as string];
+        if (val === undefined)
+          throw new Error(`no global state value: ${data}`);
+        return val;
       case "abi-method":
+        // TODO: call abi method
         return 0;
       default:
         return data;
