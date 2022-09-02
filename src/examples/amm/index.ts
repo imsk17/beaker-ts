@@ -66,9 +66,6 @@ import { ConstantProductAMM } from "./constantproductamm_client";
         amount: BigInt(1e6),
         assetIndex: Number(assetB),
       }),
-      pool_asset: poolToken,
-      a_asset: assetA,
-      b_asset: assetB
   })
   let amt: number|bigint|undefined = 0
   if(result.inners.length>0) amt = result.inners[0]?.txn.amount
@@ -83,10 +80,8 @@ import { ConstantProductAMM } from "./constantproductamm_client";
       amount: BigInt(1e3),
       assetIndex: Number(assetA),
     }),
-    a_asset: assetA,
-    b_asset: assetB
   })
-  //console.log(`Received ${swapAtoB.inners[0].txn.amount} B tokens`)
+  console.log(`Received ${result.inners[0]?.txn.amount} B tokens`)
 
   // Try to swap B for A 
   result = await appClient.swap({
@@ -97,10 +92,8 @@ import { ConstantProductAMM } from "./constantproductamm_client";
       amount: BigInt(1e3),
       assetIndex: Number(assetB),
     }),
-    a_asset: assetA,
-    b_asset: assetB
   })
-  //console.log(`Received ${swapBtoA.inners[0].txn.amount} A tokens`)
+  console.log(`Received ${result.inners[0]?.txn.amount} A tokens`)
 
   // Burn some pool tokens
   result = await appClient.burn({
@@ -111,12 +104,8 @@ import { ConstantProductAMM } from "./constantproductamm_client";
       amount: BigInt(10),
       assetIndex: Number(poolToken),
     }),
-    pool_asset: poolToken,
-    a_asset: assetA,
-    b_asset: assetB
   })
   const [aRx, bRx] = result.inners
-
   console.log(`Received ${aRx?.txn.amount} A tokens and ${bRx?.txn.amount} B tokens`)
 
 })();
