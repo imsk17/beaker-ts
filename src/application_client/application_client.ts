@@ -46,7 +46,7 @@ export class ABIResult<T extends ABIReturnType> {
   decodeError?: Error;
 
   value?: T;
-  inners?: InnerTransaction[];
+  inners: InnerTransaction[];
 
   constructor(result: algosdk.ABIResult, value?: T) {
     this.txID = result.txID;

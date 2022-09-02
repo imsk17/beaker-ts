@@ -6,6 +6,8 @@ import { ConstantProductAMM } from "./constantproductamm_client";
 (async function () {
   const acct = (await getAccounts()).pop();
 
+  if(acct === undefined) return
+
   const appClient = new ConstantProductAMM({
     client: getAlgodClient(),
     signer: acct.signer,
@@ -32,6 +34,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     a_asset: assetA,
     b_asset: assetB
   });
+  if(bootstrapResult === undefined || bootstrapResult.value === undefined) return
 
   // The return value is the id of the pool token
   const poolToken = bootstrapResult.value

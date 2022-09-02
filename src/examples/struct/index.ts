@@ -5,6 +5,8 @@ import { Order, Structer } from "./structer_client";
 (async function () {
   const acct = (await getAccounts()).pop();
 
+  if(acct === undefined) return
+
   const appClient = new Structer({
     client: getAlgodClient(),
     signer: acct.signer,

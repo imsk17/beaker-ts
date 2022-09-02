@@ -4,6 +4,8 @@ import { DemoAVM7 } from "./demoavm7_client";
 (async function () {
   const acct = (await getAccounts()).pop();
 
+  if(acct === undefined) return
+
   const appClient = new DemoAVM7({
     client: getAlgodClient(),
     signer: acct.signer,
