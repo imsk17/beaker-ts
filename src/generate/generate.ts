@@ -500,8 +500,9 @@ function generateStructTypes(spec: AppSpec): ts.Node[] {
   const hints = spec.hints;
 
   const structs: Record<string, ts.ClassDeclaration> = {};
-  for (const k in Object.keys(hints)) {
+  for (const k of Object.keys(hints)) {
     const hint = hints[k]
+
     if (hint !== undefined && hint.structs !== undefined) {
       for (const sk of Object.keys(hint.structs)) {
         const struct = hint.structs[sk];

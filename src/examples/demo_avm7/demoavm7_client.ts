@@ -1,5 +1,30 @@
 import algosdk from "algosdk";
 import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides} from "../..";
+export class BlockDetails {
+    ts: bigint = BigInt(0);
+    seed: Uint8Array = new Uint8Array();
+    static codec: algosdk.ABIType = algosdk.ABIType.from("(uint64,byte[32])");
+    static fields: string[] = ["ts", "seed"];
+    static decodeResult(val: algosdk.ABIValue | undefined): BlockDetails {
+        return decodeNamedTuple(val, BlockDetails.fields) as BlockDetails;
+    }
+    static decodeBytes(val: Uint8Array): BlockDetails {
+        return decodeNamedTuple(BlockDetails.codec.decode(val), BlockDetails.fields) as BlockDetails;
+    }
+}
+export class JsonExampleResult {
+    string_key: string = "";
+    uint_key: bigint = BigInt(0);
+    obj_key: string = "";
+    static codec: algosdk.ABIType = algosdk.ABIType.from("(string,uint64,string)");
+    static fields: string[] = ["string_key", "uint_key", "obj_key"];
+    static decodeResult(val: algosdk.ABIValue | undefined): JsonExampleResult {
+        return decodeNamedTuple(val, JsonExampleResult.fields) as JsonExampleResult;
+    }
+    static decodeBytes(val: Uint8Array): JsonExampleResult {
+        return decodeNamedTuple(JsonExampleResult.codec.decode(val), JsonExampleResult.fields) as JsonExampleResult;
+    }
+}
 export class DemoAVM7 extends ApplicationClient {
     desc: string = "";
     override appSchema: Schema = { declared: {}, dynamic: {} };
