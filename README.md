@@ -16,8 +16,6 @@ from beaker.client import ApplicationClient
 class App(Application):
     #...
 
-#...
-
 with open("app.json", "w") as f:
   f.write(json.dumps(App.application_spec()))
 ```
