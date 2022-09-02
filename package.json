@@ -1,12 +1,11 @@
 {
   "name": "beaker-ts",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "",
   "main": "./lib/index.js",
   "scripts": {
     "build": "tsc -p .",
     "beaker": "npx ts-node src/beaker.ts", 
-
 
     "genhello":"npm run beaker -- generate --local src/examples/hello/hello.json src/examples/hello/",
     "hello": "npx ts-node src/examples/hello/index.ts",
