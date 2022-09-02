@@ -16,18 +16,12 @@ export interface DefaultArgument {
   data: string | bigint | number 
 }
 export interface Hint {
-  structs: {
-    [key: string]: Struct
-  }
+  structs: Record<string, Struct> 
   readonly: boolean
-  default_arguments: {
-    [key: string]: DefaultArgument
-  }
+  default_arguments: Record<string, DefaultArgument>
 }
 
-export interface HintSpec {
-  [key: string]:  Hint
-}
+export type HintSpec = Record<string, Hint> 
 
 export interface DeclaredSchemaValueSpec {
   type: AVMType;
@@ -43,12 +37,8 @@ export interface DynamicSchemaValueSpec {
 }
 
 export interface Schema {
-  declared: {
-    [key: string]: DeclaredSchemaValueSpec;
-  };
-  dynamic: {
-    [key: string]: DynamicSchemaValueSpec;
-  };
+  declared: Record<string, DeclaredSchemaValueSpec>
+  dynamic: Record<string, DynamicSchemaValueSpec>
 }
 
 export type StateSchema = {

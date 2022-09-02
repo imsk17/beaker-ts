@@ -1,6 +1,6 @@
 import algosdk from "algosdk";
-import { getAccounts, getAlgodClient } from "../../";
 import { SandboxAccount } from "../../sandbox/accounts";
+import { getAccounts, getAlgodClient } from "../../";
 import { ConstantProductAMM } from "./constantproductamm_client";
 
 (async function () {
@@ -38,8 +38,6 @@ import { ConstantProductAMM } from "./constantproductamm_client";
 
   // The return value is the id of the pool token
   const poolToken = bootstrapResult.value
-  // Can get the createdAsset from the inners 
-  console.log(bootstrapResult.inners[0].createdAsset)
 
   // Opt user into new pool token
   const optInToAsset = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
@@ -72,8 +70,9 @@ import { ConstantProductAMM } from "./constantproductamm_client";
       a_asset: assetA,
       b_asset: assetB
   })
-
-  console.log(`Received ${fundResult.inners[0].txn.amount} pool tokens`)
+  let amt: number|bigint|undefined = 0
+  if(fundResult.inners.length>0) amt = fundResult.inners[0]?.txn.amount
+  console.log(`Received ${amt} pool tokens`)
 
   // Try to swap A for B
   const swapAtoB = await appClient.swap({
@@ -87,7 +86,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     a_asset: assetA,
     b_asset: assetB
   })
-  console.log(`Received ${swapAtoB.inners[0].txn.amount} B tokens`)
+  //console.log(`Received ${swapAtoB.inners[0].txn.amount} B tokens`)
 
   // Try to swap B for A 
   const swapBtoA = await appClient.swap({
@@ -101,7 +100,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     a_asset: assetA,
     b_asset: assetB
   })
-  console.log(`Received ${swapBtoA.inners[0].txn.amount} A tokens`)
+  //console.log(`Received ${swapBtoA.inners[0].txn.amount} A tokens`)
 
   // Burn some pool tokens
   const burnResult = await appClient.burn({
@@ -116,9 +115,9 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     a_asset: assetA,
     b_asset: assetB
   })
-  const [aRcv, bRcv] = burnResult.inners
+  const [aRx, bRx] = burnResult.inners
 
-  console.log(`Received ${aRcv.txn.amount} A tokens and ${bRcv.txn.amount} B tokens`)
+  console.log(`Received ${aRx?.txn.amount} A tokens and ${bRx?.txn.amount} B tokens`)
 
 })();
 

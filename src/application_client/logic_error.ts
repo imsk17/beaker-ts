@@ -1,4 +1,4 @@
-import algosdk from "algosdk"
+import algosdk from 'algosdk'
 
 const LOGIC_ERROR = /TransactionPool.Remember: transaction ([A-Z0-9]+): logic eval error: (.*). Details: pc=([0-9]+), opcodes=.*/
 
@@ -10,12 +10,12 @@ interface LogicErrorDetails {
 
 export function parseLogicError(errMsg: string): LogicErrorDetails {
     const res = LOGIC_ERROR.exec(errMsg)
-    if(res === null || res.length<=3) return {} as LogicErrorDetails
+    if(res === null || res.length<=4) return {} as LogicErrorDetails
 
     return {
         txId: res[1],
         msg: res[2],
-        pc: parseInt(res[3]),
+        pc: parseInt(res[3]?res[3]:"0"),
     } as LogicErrorDetails
 }
 
@@ -24,7 +24,7 @@ export class LogicError extends Error {
     program: string[];
     lines: number = 5;
     teal_line: number=0;
-    stack?: string;
+    override stack?: string;
 
     constructor(led: LogicErrorDetails, program: string[], map: algosdk.SourceMap){
         super()

@@ -18,8 +18,11 @@ export type ABIReturnType = object | void | algosdk.ABIValue;
 
 export type TransactionOverrides = Partial<algosdk.TransactionParams>;
 
-export function decodeNamedTuple(v: algosdk.ABIValue | undefined, keys: string[]): object {
-  if(v === undefined) return {}
+export function decodeNamedTuple(
+  v: algosdk.ABIValue | undefined,
+  keys: string[]
+): object {
+  if (v === undefined) return {};
   if (!Array.isArray(v)) throw Error("Expected array");
   if (v.length != keys.length)
     throw Error("Different key length than value length");
@@ -180,12 +183,15 @@ export class ApplicationClient {
 
     try {
       const result = await atc.execute(this.client, 4);
-      const txinfo = await this.client
-        .pendingTransactionInformation(result.txIDs[0])
-        .do();
+      const txid = result.txIDs[0];
+
+      if (txid === undefined)
+        throw new Error("No transaction id returned from execute");
+
+      const txinfo = await this.client.pendingTransactionInformation(txid).do();
       this.appId = txinfo["application-index"];
       this.appAddress = algosdk.getApplicationAddress(this.appId);
-      return [this.appId, this.appAddress, result.txIDs[0]];
+      return [this.appId, this.appAddress, txid];
     } catch (e) {
       throw this.wrapLogicError(e as Error);
     }
@@ -327,12 +333,9 @@ export class ApplicationClient {
 
     try {
       const result = await atc.execute(this.client, 4);
-      if (
-        result.methodResults === undefined ||
-        result.methodResults.length == 0
-      )
-        return {} as algosdk.ABIResult;
-      return result.methodResults[0];
+      return result.methodResults[0]
+        ? result.methodResults[0]
+        : ({} as algosdk.ABIResult);
     } catch (e) {
       throw this.wrapLogicError(e as Error);
     }
