@@ -1,11 +1,11 @@
 import algosdk from "algosdk";
 import {ApplicationClient, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides} from "../..";
 export class Order {
-    item: string;
-    quantity: bigint;
+    item: string = "";
+    quantity: bigint = BigInt(0);
     static codec: algosdk.ABIType = algosdk.ABIType.from("(string,uint16)");
     static fields: string[] = ["item", "quantity"];
-    static decodeResult(val: algosdk.ABIValue): Order {
+    static decodeResult(val: algosdk.ABIValue | undefined): Order {
         return decodeNamedTuple(val, Order.fields) as Order;
     }
     static decodeBytes(val: Uint8Array): Order {
