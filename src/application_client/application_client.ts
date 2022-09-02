@@ -41,11 +41,11 @@ export class ABIResult<T extends ABIReturnType> {
   txID: string;
   rawReturnValue: Uint8Array;
   method: algosdk.ABIMethod;
-  txInfo?: Record<string, any>;
-  returnValue?: algosdk.ABIValue;
-  decodeError?: Error;
+  txInfo: Record<string, any> | undefined;
+  returnValue: algosdk.ABIValue | undefined;
+  decodeError: Error | undefined;
 
-  value?: T;
+  value: T | undefined;
   inners: InnerTransaction[];
 
   constructor(result: algosdk.ABIResult, value?: T) {
@@ -96,14 +96,14 @@ export class ApplicationClient {
   appSchema?: Schema;
   acctSchema?: Schema;
 
-  signer?: algosdk.TransactionSigner;
+  signer: algosdk.TransactionSigner;
   sender: string;
 
   constructor(opts: {
     client: algosdk.Algodv2;
-    appId?: number;
-    signer?: algosdk.TransactionSigner;
+    signer: algosdk.TransactionSigner;
     sender: string;
+    appId?: number;
   }) {
     this.client = opts.client;
 

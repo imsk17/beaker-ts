@@ -248,12 +248,12 @@ function generateMethodImpl(
     const argName: ts.Identifier = factory.createIdentifier(arg.name);
 
     const argType: ts.TypeNode =
-      hint.structs !== undefined && arg.name in hint.structs
+      hint?.structs !== undefined && arg.name in hint.structs 
         ? factory.createTypeReferenceNode(hint.structs[arg.name].name)
         : tsTypeFromAbiType(arg.type.toString());
 
     const defaultArg =
-      hint.default_arguments !== undefined && arg.name in hint.default_arguments
+      hint?.default_arguments !== undefined && arg.name in hint.default_arguments
         ? hint.default_arguments[arg.name]
         : undefined;
 
@@ -339,12 +339,13 @@ function generateMethodImpl(
     abiRetType = tsTypeFromAbiType(method.returns.type.toString());
     // Always `output` here because pyteal,
     // when others app specs come in we should consider them
-    if (hint.structs !== undefined && "output" in hint.structs) {
-      abiRetType = factory.createTypeReferenceNode(hint.structs["output"].name);
+    if (hint?.structs !== undefined && "output" in hint.structs) {
+      const outputHint = hint.structs["output"]
+      abiRetType = factory.createTypeReferenceNode(outputHint?.name);
       resultArgs.push(
         factory.createCallExpression(
           factory.createPropertyAccessExpression(
-            factory.createIdentifier(hint.structs["output"].name),
+            factory.createIdentifier(outputHint.name),
             factory.createIdentifier("decodeResult")
           ),
           undefined,
@@ -418,10 +419,6 @@ function generateMethodImpl(
       ),
     ]
   );
-
-  //const parameters = [
-  //  factory.createObjectBindingPattern()
-  //]
 
   const methodSpec = factory.createMethodDeclaration(
     undefined,
@@ -503,9 +500,9 @@ function generateStructTypes(spec: AppSpec): ts.Node[] {
   const hints = spec.hints;
 
   const structs: Record<string, ts.ClassDeclaration> = {};
-  for (const k of Object.keys(hints)) {
-    const hint = hints[k];
-    if (hint.structs !== undefined) {
+  for (const k in Object.keys(hints)) {
+    const hint = hints[k]
+    if (hint !== undefined && hint.structs !== undefined) {
       for (const sk of Object.keys(hint.structs)) {
         const struct = hint.structs[sk];
         if (!(struct.name in struct)) {
@@ -734,7 +731,7 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
   // Create approval program property
   const approvalProp = factory.createPropertyDeclaration(
     undefined,
-    undefined,
+    [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
     factory.createIdentifier("approvalProgram"),
     undefined,
     factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
@@ -744,7 +741,7 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
   // Create clear program property
   const clearProp = factory.createPropertyDeclaration(
     undefined,
-    undefined,
+    [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
     factory.createIdentifier("clearProgram"),
     undefined,
     factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
@@ -754,7 +751,7 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
   // Create App Schema Property
   const appSchemaProp = factory.createPropertyDeclaration(
     undefined,
-    undefined,
+    [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
     factory.createIdentifier("appSchema"),
     undefined,
     factory.createTypeReferenceNode("Schema"),
@@ -764,7 +761,7 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
   // Create Acct schema property
   const acctSchemaProp = factory.createPropertyDeclaration(
     undefined,
-    undefined,
+    [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
     factory.createIdentifier("acctSchema"),
     undefined,
     factory.createTypeReferenceNode("Schema"),
