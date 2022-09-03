@@ -1,8 +1,6 @@
 # Beaker Typescript Client Generator
 
-EXPERIMENTAL
-
-> :warning: **zero tests, please report issues**
+> :warning: **Experimental. Zero tests. Please report issues**
 
 ## Generate an ApplicationSpec
 
