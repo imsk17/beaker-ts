@@ -14,9 +14,9 @@ import { writeFileSync } from "fs";
 // AMAZING resource:
 // https://ts-ast-viewer.com/#
 
-const CLIENT_NAME = "ApplicationClient";
+const CLIENT_NAME = "bkr.ApplicationClient";
 // TODO: only import if we _need_ them
-const CLIENT_IMPORTS = `{${CLIENT_NAME}, ABIResult, decodeNamedTuple, Schema, AVMType, TransactionOverrides}`;
+const CLIENT_IMPORTS = `* as bkr`;
 const CLIENT_PATH = "beaker-ts";
 
 const ALGOSDK_IMPORTS = "algosdk";
@@ -33,6 +33,22 @@ const TXN_TYPES: string[] = [
   "keyreg",
   "frz",
 ];
+
+
+// native types
+const UINT8_ARRAY_IDENT = factory.createIdentifier("Uint8Array")
+const UINT8_ARRAY_TYPE = factory.createTypeReferenceNode(UINT8_ARRAY_IDENT)
+
+// sdk types
+const ABI_METHOD_IDENT = factory.createIdentifier("algosdk.ABIMethod")
+const ABI_METHOD_TYPE = factory.createTypeReferenceNode( ABI_METHOD_IDENT)
+
+// bkr types
+const ABI_RESULT_IDENT = factory.createIdentifier("bkr.ABIResult")
+const DECODE_NAMED_TUPLE_IDENT = factory.createIdentifier("bkr.decodeNamedTuple")
+const SCHEMA_TYPE =  factory.createTypeReferenceNode("bkr.Schema")
+const TRANSACTION_OVERRIDES_TYPE = factory.createTypeReferenceNode("bkr.TransactionOverrides")
+
 
 function tsTypeFromAbiType(argType: string | algosdk.ABIType): ts.TypeNode {
   if (typeof argType === "string") {
@@ -68,9 +84,7 @@ function tsTypeFromAbiType(argType: string | algosdk.ABIType): ts.TypeNode {
       switch (asStaticArr.childType.constructor) {
         // If its bytes, make it a uint8array
         case algosdk.ABIByteType:
-          return factory.createTypeReferenceNode(
-            factory.createIdentifier("Uint8Array")
-          );
+          return UINT8_ARRAY_TYPE
       }
 
       return factory.createArrayTypeNode(
@@ -82,9 +96,7 @@ function tsTypeFromAbiType(argType: string | algosdk.ABIType): ts.TypeNode {
       switch (asArr.childType.constructor) {
         // If its bytes, make it a uint8array
         case algosdk.ABIByteType:
-          return factory.createTypeReferenceNode(
-            factory.createIdentifier("Uint8Array")
-          );
+          return UINT8_ARRAY_TYPE
       }
 
       return factory.createArrayTypeNode(tsTypeFromAbiType(asArr.childType));
@@ -117,13 +129,12 @@ function defaultValueFromTsType(t: ts.TypeNode): ts.Expression {
       return factory.createIdentifier("false");
     case ts.SyntaxKind.TypeReference:
       return factory.createNewExpression(
-        factory.createIdentifier("Uint8Array"),
+        UINT8_ARRAY_IDENT,
         undefined,
         []
       );
   }
-  console.log(t);
-  console.log(t.kind);
+
   return factory.createIdentifier("undefined");
 }
 
@@ -214,10 +225,12 @@ function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
   );
 }
 
+// Creates the methods on the AppClient class used to call specific ABI methods 
 function generateMethodImpl(
   method: algosdk.ABIMethod,
   spec: AppSpec
 ): ts.ClassElement {
+
   const params: ts.ParameterDeclaration[] = [];
   const callArgs: ts.Expression[] = [];
   const abiMethodArgs: ts.PropertyAssignment[] = [];
@@ -228,7 +241,7 @@ function generateMethodImpl(
 
   callArgs.push(
     factory.createCallExpression(
-      factory.createIdentifier("algosdk.getMethodByName"),
+      factory.createIdentifier("algosdk.getMethodByName"), 
       undefined,
       [
         factory.createPropertyAccessExpression(
@@ -308,16 +321,18 @@ function generateMethodImpl(
   }
 
   // Expect args
-  params.push(
-    factory.createParameterDeclaration(
-      undefined,
-      undefined,
-      undefined,
-      factory.createIdentifier("args"),
-      undefined,
-      factory.createTypeLiteralNode(argParams)
-    )
-  );
+  if(argParams.length>0){
+    params.push(
+      factory.createParameterDeclaration(
+        undefined,
+        undefined,
+        undefined,
+        factory.createIdentifier("args"),
+        undefined,
+        factory.createTypeLiteralNode(argParams)
+      )
+    );
+  }
 
   // Any tx overrides
 
@@ -329,7 +344,7 @@ function generateMethodImpl(
       undefined,
       txnParams,
       factory.createToken(ts.SyntaxKind.QuestionToken),
-      factory.createTypeReferenceNode("TransactionOverrides")
+      TRANSACTION_OVERRIDES_TYPE,
     )
   );
 
@@ -411,9 +426,7 @@ function generateMethodImpl(
       ),
       factory.createReturnStatement(
         factory.createNewExpression(
-          factory.createIdentifier("ABIResult"),
-          [abiRetType],
-          resultArgs
+          ABI_RESULT_IDENT, [abiRetType], resultArgs
         )
       ),
     ],
@@ -423,9 +436,7 @@ function generateMethodImpl(
   let retType = factory.createTypeReferenceNode(
     factory.createIdentifier("Promise"),
     [
-      factory.createTypeReferenceNode(factory.createIdentifier("ABIResult"), [
-        abiRetType,
-      ]),
+      factory.createTypeReferenceNode(ABI_RESULT_IDENT, [abiRetType]),
     ]
   );
 
@@ -452,16 +463,10 @@ function copySchemaObject(so: Schema): ts.Expression {
         factory.createObjectLiteralExpression([
           factory.createPropertyAssignment(
             factory.createIdentifier("type"),
-            factory.createIdentifier(`AVMType.${sv[1].type}`)
+            factory.createIdentifier(`bkr.AVMType.${sv[1].type}`)
           ),
-          factory.createPropertyAssignment(
-            factory.createIdentifier("key"),
-            factory.createStringLiteral(sv[1].key ? sv[1].key : "")
-          ),
-          factory.createPropertyAssignment(
-            factory.createIdentifier("desc"),
-            factory.createStringLiteral(sv[1].desc ? sv[1].desc : "")
-          ),
+          objStrProperty("key", sv[1].key),
+          objStrProperty("desc", sv[1].desc),
           factory.createPropertyAssignment(
             factory.createIdentifier("static"),
             sv[1].static ? factory.createTrue() : factory.createFalse()
@@ -478,12 +483,9 @@ function copySchemaObject(so: Schema): ts.Expression {
         factory.createObjectLiteralExpression([
           factory.createPropertyAssignment(
             factory.createIdentifier("type"),
-            factory.createIdentifier(`AVMType.${sv[1].type.toString()}`)
+            factory.createIdentifier(`bkr.AVMType.${sv[1].type.toString()}`)
           ),
-          factory.createPropertyAssignment(
-            factory.createIdentifier("desc"),
-            factory.createStringLiteral(sv[1].desc ? sv[1].desc : "")
-          ),
+          objStrProperty("desc", sv[1].desc),
           factory.createPropertyAssignment(
             factory.createIdentifier("max_keys"),
             factory.createNumericLiteral(sv[1].max_keys ? sv[1].max_keys : 0)
@@ -626,7 +628,7 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
           factory.createReturnStatement(
             factory.createAsExpression(
               factory.createCallExpression(
-                factory.createIdentifier("decodeNamedTuple"),
+                DECODE_NAMED_TUPLE_IDENT,
                 undefined,
                 [
                   factory.createIdentifier("val"),
@@ -663,10 +665,7 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
           undefined,
           factory.createIdentifier("val"),
           undefined,
-          factory.createTypeReferenceNode(
-            factory.createIdentifier("Uint8Array"),
-            undefined
-          ),
+          UINT8_ARRAY_TYPE,
           undefined
         ),
       ],
@@ -679,7 +678,7 @@ function generateStruct(s: Struct): ts.ClassDeclaration {
           factory.createReturnStatement(
             factory.createAsExpression(
               factory.createCallExpression(
-                factory.createIdentifier("decodeNamedTuple"),
+                DECODE_NAMED_TUPLE_IDENT,
                 undefined,
                 [
                   factory.createCallExpression(
@@ -763,7 +762,7 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
     [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
     factory.createIdentifier("appSchema"),
     undefined,
-    factory.createTypeReferenceNode("Schema"),
+    SCHEMA_TYPE,
     copySchemaObject(schema.global)
   );
 
@@ -773,59 +772,36 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
     [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
     factory.createIdentifier("acctSchema"),
     undefined,
-    factory.createTypeReferenceNode("Schema"),
+    SCHEMA_TYPE,
     copySchemaObject(schema.local)
   );
 
   // Add methods
   const methodAssignments: ts.Expression[] = [];
   for (const meth of methods) {
+
     const argObjs: ts.ObjectLiteralExpression[] = meth.args.map((arg) => {
       return factory.createObjectLiteralExpression([
-        factory.createPropertyAssignment(
-          factory.createIdentifier("type"),
-          factory.createStringLiteral(arg.type.toString())
-        ),
-        factory.createPropertyAssignment(
-          factory.createIdentifier("name"),
-          factory.createStringLiteral(arg.name ? arg.name : "")
-        ),
-        factory.createPropertyAssignment(
-          factory.createIdentifier("desc"),
-          factory.createStringLiteral(arg.description ? arg.description : "")
-        ),
+        objStrProperty("type", arg.type.toString()),
+        objStrProperty("name", arg.name),
+        objStrProperty("desc", arg.description)
       ]);
     });
 
     const returnObj = factory.createObjectLiteralExpression([
-      factory.createPropertyAssignment(
-        factory.createIdentifier("type"),
-        factory.createStringLiteral(meth.returns.type.toString())
-      ),
-      factory.createPropertyAssignment(
-        factory.createIdentifier("desc"),
-        factory.createStringLiteral(
-          meth.returns.description ? meth.returns.description : ""
-        )
-      ),
+      objStrProperty("type", meth.returns.type.toString()),
+      objStrProperty("desc", meth.returns.description)
     ]);
 
+    // Create ABIMethod object 
     methodAssignments.push(
       factory.createNewExpression(
-        factory.createIdentifier("algosdk.ABIMethod"),
+        ABI_METHOD_IDENT,
         undefined,
         [
           factory.createObjectLiteralExpression([
-            factory.createPropertyAssignment(
-              factory.createIdentifier("name"),
-              factory.createStringLiteral(meth.name)
-            ),
-            factory.createPropertyAssignment(
-              factory.createIdentifier("desc"),
-              factory.createStringLiteral(
-                meth.description ? meth.description : ""
-              )
-            ),
+            objStrProperty("name", meth.name),
+            objStrProperty("desc", meth.description),
             factory.createPropertyAssignment(
               factory.createIdentifier("args"),
               factory.createArrayLiteralExpression(argObjs)
@@ -843,14 +819,10 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
   // create methods property
   const methodProps = factory.createPropertyDeclaration(
     undefined,
-    undefined,
+    [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
     factory.createIdentifier("methods"),
     undefined,
-    factory.createArrayTypeNode(
-      factory.createTypeReferenceNode(
-        factory.createIdentifier("algosdk.ABIMethod")
-      )
-    ),
+    factory.createArrayTypeNode(ABI_METHOD_TYPE),
     factory.createArrayLiteralExpression(methodAssignments, true)
   );
 
@@ -862,4 +834,13 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
     clearProp,
     methodProps,
   ];
+}
+
+
+function objStrProperty(k: string, v: string | undefined): ts.PropertyAssignment {
+  const val = v===undefined?"":v
+  return factory.createPropertyAssignment(
+        factory.createIdentifier(k),
+        factory.createStringLiteral(val)
+  )
 }

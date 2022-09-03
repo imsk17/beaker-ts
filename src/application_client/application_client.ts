@@ -82,6 +82,11 @@ export class ApplicationClient {
   appId: number;
   appAddress: string;
 
+  signer: algosdk.TransactionSigner;
+  sender: string;
+
+  methods: algosdk.ABIMethod[] = [];
+
   approvalProgram?: string;
   clearProgram?: string;
 
@@ -93,9 +98,6 @@ export class ApplicationClient {
 
   appSchema?: Schema;
   acctSchema?: Schema;
-
-  signer: algosdk.TransactionSigner;
-  sender: string;
 
   constructor(opts: {
     client: algosdk.Algodv2;
@@ -422,8 +424,9 @@ export class ApplicationClient {
           throw new Error(`no global state value: ${data}`);
         return val;
       case "abi-method":
-        // TODO: call abi method
-        return 0;
+        // TODO: args?
+        const meth = algosdk.getMethodByName(this.methods, data as string)
+        return await this.call(meth)
       default:
         return data;
     }
