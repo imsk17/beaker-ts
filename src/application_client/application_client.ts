@@ -85,7 +85,7 @@ export class ApplicationClient {
   signer: algosdk.TransactionSigner;
   sender: string;
 
-  methods: algosdk.ABIMethod[] = [];
+  methods?: algosdk.ABIMethod[];
 
   approvalProgram?: string;
   clearProgram?: string;
@@ -425,6 +425,8 @@ export class ApplicationClient {
         return val;
       case "abi-method":
         // TODO: args?
+        if(this.methods === undefined)
+          throw new Error("no methods defined, cannot resolve hint")
         const meth = algosdk.getMethodByName(this.methods, data as string)
         return await this.call(meth)
       default:

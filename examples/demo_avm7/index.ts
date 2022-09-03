@@ -1,4 +1,4 @@
-import { getAccounts, getAlgodClient } from "../../";
+import { getAccounts, getAlgodClient } from "../../src";
 import { DemoAVM7 } from "./demoavm7_client";
 
 (async function () {

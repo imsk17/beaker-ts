@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import * as bkr from "../..";
+import * as bkr from "../../src/";
 export class ExpensiveApp extends bkr.ApplicationClient {
     desc: string = "";
     override appSchema: bkr.Schema = { declared: { opup_app_id: { type: bkr.AVMType.uint64, key: "ouaid", desc: "", static: false } }, dynamic: {} };

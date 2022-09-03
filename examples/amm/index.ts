@@ -1,6 +1,6 @@
 import algosdk from "algosdk";
-import type { SandboxAccount } from "../../sandbox/accounts";
-import { getAccounts, getAlgodClient } from "../../";
+import type { SandboxAccount } from "../../src/sandbox/accounts";
+import { getAccounts, getAlgodClient } from "../../src";
 import { ConstantProductAMM } from "./constantproductamm_client";
 
 (async function () {

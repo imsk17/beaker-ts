@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import * as bkr from "../..";
+import * as bkr from "../../src/";
 export class BlockDetails {
     ts: bigint = BigInt(0);
     seed: Uint8Array = new Uint8Array();

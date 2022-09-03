@@ -7,22 +7,22 @@
     "build": "tsc -p .",
     "beaker": "npx ts-node src/beaker.ts", 
 
-    "genhello":"npm run beaker -- generate --local src/examples/hello/hello.json src/examples/hello/",
-    "hello": "npx ts-node src/examples/hello/index.ts",
+    "genhello":"npm run beaker -- generate --local examples/hello/hello.json examples/hello/",
+    "hello": "npx ts-node examples/hello/index.ts",
 
-    "genstructer":"npm run beaker -- generate --local src/examples/struct/structer.json src/examples/struct/",
-    "structer": "npx ts-node src/examples/struct/index.ts",
+    "genstructer":"npm run beaker -- generate --local examples/struct/structer.json examples/struct/",
+    "structer": "npx ts-node examples/struct/index.ts",
 
-    "genopup":"npm run beaker -- generate --local src/examples/opup/opup.json src/examples/opup/",
-    "opup": "npx ts-node src/examples/opup/index.ts",
+    "genopup":"npm run beaker -- generate --local examples/opup/opup.json examples/opup/",
+    "opup": "npx ts-node examples/opup/index.ts",
 
-    "genamm":"npm run beaker -- generate --local src/examples/amm/amm.json src/examples/amm/",
-    "amm": "npx ts-node src/examples/amm/index.ts",
+    "genamm":"npm run beaker -- generate --local examples/amm/amm.json examples/amm/",
+    "amm": "npx ts-node examples/amm/index.ts",
 
-    "genavm7":"npm run beaker -- generate --local src/examples/demo_avm7/demo_avm7.json src/examples/demo_avm7/",
-    "avm7": "npx ts-node src/examples/demo_avm7/index.ts",
+    "genavm7":"npm run beaker -- generate --local examples/demo_avm7/demo_avm7.json examples/demo_avm7/",
+    "avm7": "npx ts-node examples/demo_avm7/index.ts",
 
-    "regen":"npm run genhello && npm run genstructer && npm run genopup && npm run genavm7"
+    "regen":"npm run genhello && npm run genstructer && npm run genopup && npm run genavm7 && npm run genamm"
   },
   "bin": {
     "beaker": "./lib/beaker.js"

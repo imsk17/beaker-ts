@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import * as bkr from "../..";
+import * as bkr from "../../src/";
 export class ConstantProductAMM extends bkr.ApplicationClient {
     desc: string = "";
     override appSchema: bkr.Schema = { declared: { asset_a: { type: bkr.AVMType.uint64, key: "a", desc: "", static: false }, asset_b: { type: bkr.AVMType.uint64, key: "b", desc: "", static: false }, governor: { type: bkr.AVMType.bytes, key: "g", desc: "", static: false }, pool_token: { type: bkr.AVMType.uint64, key: "p", desc: "", static: false }, ratio: { type: bkr.AVMType.uint64, key: "r", desc: "", static: false } }, dynamic: {} };

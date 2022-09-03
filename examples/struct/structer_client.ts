@@ -1,5 +1,5 @@
 import algosdk from "algosdk";
-import * as bkr from "../..";
+import * as bkr from "../../src/";
 export class Order {
     item: string = "";
     quantity: bigint = BigInt(0);
