@@ -1,13 +1,13 @@
-import { getAccounts, getAlgodClient } from "../../src";
+import * as bkr from "../../src";
 import { DemoAVM7 } from "./demoavm7_client";
 
 (async function () {
-  const acct = (await getAccounts()).pop();
+  const acct = (await bkr.sandbox.getAccounts()).pop();
 
   if(acct === undefined) return
 
   const appClient = new DemoAVM7({
-    client: getAlgodClient(),
+    client: bkr.sandbox.getAlgodClient(),
     signer: acct.signer,
     sender: acct.addr,
   });
