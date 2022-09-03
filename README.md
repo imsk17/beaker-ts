@@ -30,7 +30,7 @@ npm install beaker-ts
 Generate the client using the `beaker generate` command
 
 ```sh
-$ beaker help generate
+$ npx beaker help generate
 
 Usage: beaker generate [options] <path-to-spec> <path-to-write>
 
