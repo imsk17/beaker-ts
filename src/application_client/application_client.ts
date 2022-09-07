@@ -365,7 +365,7 @@ export class ApplicationClient {
           txn: arg,
           signer: this.signer,
         } as algosdk.TransactionWithSigner;
-      } else if (arg instanceof Object) {
+      } else if ( arg instanceof Object && !algosdk.isTransactionWithSigner(arg)) {
         arg = Object.values(arg);
       }
 
