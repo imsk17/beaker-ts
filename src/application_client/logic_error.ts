@@ -10,7 +10,7 @@ interface LogicErrorDetails {
 
 export function parseLogicError(errMsg: string): LogicErrorDetails {
     const res = LOGIC_ERROR.exec(errMsg)
-    if(res === null || res.length<=4) return {} as LogicErrorDetails
+    if(res === null || res.length<=3) return {} as LogicErrorDetails
 
     return {
         txId: res[1],
