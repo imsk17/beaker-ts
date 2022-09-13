@@ -34,7 +34,7 @@ export class LogicError extends Error {
         const line = map.getLineForPc(led.pc)
         this.teal_line = line === undefined?0:line
 
-        this.message = `Logic Exception at line ${line}`
+        this.message = `${this.led.msg.slice(0, 20)}... at:${line}`
 
         if(this.teal_line>0){
 
