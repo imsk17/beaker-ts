@@ -1,4 +1,4 @@
-import algosdk from "algosdk";
+import algosdk, { ABIReferenceType } from "algosdk";
 
 import { getStateSchema, Schema } from "../";
 import { parseLogicError, LogicError } from "./logic_error";
@@ -365,7 +365,12 @@ export class ApplicationClient {
           txn: arg,
           signer: this.signer,
         } as algosdk.TransactionWithSigner;
-      } else if ( arg instanceof Object && !algosdk.isTransactionWithSigner(arg)) {
+      } else if (arg instanceof Uint8Array) {
+        // TODO: other types?
+        if (expected_arg.type instanceof algosdk.ABIAddressType || expected_arg.type == ABIReferenceType.account){
+          arg = algosdk.encodeAddress(arg)
+        }
+      }else if ( arg instanceof Object && !algosdk.isTransactionWithSigner(arg)) {
         arg = Object.values(arg);
       }
 
@@ -410,10 +415,15 @@ export class ApplicationClient {
     let val;
     switch (source) {
       case "global-state":
-        const appState = await this.getApplicationState();
-        val = appState[data as string];
+        // Use the raw return value, so encode the key as hex since 
+        // that is what we get back from the call to getAppState
+        const appState = await this.getApplicationState(true);
+        const key = Buffer.from(data as string).toString('hex')
+
+        val = appState[key];
         if (val === undefined)
           throw new Error(`no global state value: ${data}`);
+
         return val;
       case "local-state":
         // TODO: how do we pass in which account to resolve against ?
