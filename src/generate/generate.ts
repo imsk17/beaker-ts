@@ -737,44 +737,56 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
   );
 
   // Create approval program property
-  const approvalProp = factory.createPropertyDeclaration(
-    undefined,
-    [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
-    factory.createIdentifier("approvalProgram"),
-    undefined,
-    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-    factory.createStringLiteral(source.approval)
-  );
+  let approvalProp
+  if(source.approval !== undefined){
+    approvalProp = factory.createPropertyDeclaration(
+      undefined,
+      [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
+      factory.createIdentifier("approvalProgram"),
+      undefined,
+      factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+      factory.createStringLiteral(source.approval)
+    );
+  }
 
   // Create clear program property
-  const clearProp = factory.createPropertyDeclaration(
-    undefined,
-    [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
-    factory.createIdentifier("clearProgram"),
-    undefined,
-    factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
-    factory.createStringLiteral(source.clear)
-  );
+  let clearProp
+  if(source.clear !== undefined){
+    clearProp = factory.createPropertyDeclaration(
+      undefined,
+      [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
+      factory.createIdentifier("clearProgram"),
+      undefined,
+      factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+      factory.createStringLiteral(source.clear)
+    );
+  }
 
   // Create App Schema Property
-  const appSchemaProp = factory.createPropertyDeclaration(
-    undefined,
-    [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
-    factory.createIdentifier("appSchema"),
-    undefined,
-    SCHEMA_TYPE,
-    copySchemaObject(schema.global)
-  );
+  let appSchemaProp
+  if(schema.global !== undefined){
+    appSchemaProp = factory.createPropertyDeclaration(
+      undefined,
+      [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
+      factory.createIdentifier("appSchema"),
+      undefined,
+      SCHEMA_TYPE,
+      copySchemaObject(schema.global)
+    );
+  }
 
   // Create Acct schema property
-  const acctSchemaProp = factory.createPropertyDeclaration(
-    undefined,
-    [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
-    factory.createIdentifier("acctSchema"),
-    undefined,
-    SCHEMA_TYPE,
-    copySchemaObject(schema.local)
-  );
+  let acctSchemaProp
+  if(schema.local !== undefined) {
+    acctSchemaProp = factory.createPropertyDeclaration(
+      undefined,
+      [factory.createModifier(ts.SyntaxKind.OverrideKeyword)],
+      factory.createIdentifier("acctSchema"),
+      undefined,
+      SCHEMA_TYPE,
+      copySchemaObject(schema.local)
+    );
+  }
 
   // Add methods
   const methodAssignments: ts.Expression[] = [];
@@ -826,14 +838,14 @@ function generateContractProperties(spec: AppSpec): ts.PropertyDeclaration[] {
     factory.createArrayLiteralExpression(methodAssignments, true)
   );
 
-  return [
-    descrProp,
-    appSchemaProp,
-    acctSchemaProp,
-    approvalProp,
-    clearProp,
-    methodProps,
-  ];
+  const props = [descrProp]
+  if(appSchemaProp !== undefined) props.push(appSchemaProp)
+  if(acctSchemaProp !== undefined) props.push(acctSchemaProp)
+  if(approvalProp !== undefined) props.push(approvalProp)
+  if(clearProp !== undefined) props.push(clearProp)
+  props.push(methodProps)
+
+  return props
 }
 
 

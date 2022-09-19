@@ -35,8 +35,13 @@ program
 
     console.log(`Writing client to: ${srcPath}`)
 
+    let jsonObj = JSON.parse(fs.readFileSync(specPath).toString())
+    if (!("contract" in jsonObj)){
+      jsonObj = { "hints":{}, "source":{}, "schema":{}, "contract":jsonObj }
+    }
+
     generateApplicationClient(
-      JSON.parse(fs.readFileSync(specPath).toString()),
+      jsonObj,
       srcPath,
       importPath 
     );
