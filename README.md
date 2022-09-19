@@ -18,11 +18,15 @@ class HelloBeaker(Application):
 
 # Write the ApplicationSpec as json
 with open("hello.json", "w") as f:
-  f.write(json.dumps(HelloBeaker.application_spec()))
+  f.write(json.dumps(HelloBeaker().application_spec()))
 
+# OR
+
+with open("contract.json", "w") as f:
+  f.write(json.dumps(HelloBeaker().contract.dictify()))
 ```
 
-> This spec contains the ARC4 ABI spec with some extra bits to help the client
+> The ApplicationSpec contains the ARC4 ABI spec with some extra bits to help the client
 
 ## Generate a TypeScript Client
 
@@ -76,7 +80,7 @@ import {HelloBeaker} from "./hellobeaker_client";
     sender: acct.addr,
   });
 
-  // Deploy our app on chain
+  // Deploy our app on chain (Only works if the ApplicationSpec was used to generate the client)
   const [appId, appAddr, txId] = await appClient.create();
   console.log(`Created app ${appId} with address ${appAddr} in tx ${txId}`);
 
