@@ -56,7 +56,7 @@ import { DemoAVM7 } from "./demoavm7_client";
   const noopMethod = algosdk.getMethodByName(appClient.methods, "noop");
 
   let atc = new AtomicTransactionComposer();
-  await appClient.addMethodCall(atc, verifyMethod, { msg: message, sig: sig });
+  await appClient.addMethodCall(atc, verifyMethod, { msg: message, pubkey: acct.addr, sig: sig });
   // Add noop calls to increase our opcode budget since ed25519 is expensive
   await appClient.addMethodCall(atc, noopMethod, undefined, {
     note: new Uint8Array(Buffer.from("noncey1")),
