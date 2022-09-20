@@ -4,7 +4,7 @@
 // AlgodClient requests, state-deltas will contain an action, state will 
 // contain the type. In both cases 1 is for bytes, 2 is for ints. We use
 // This to convert the array to a more friendly object 
-interface StateValue {
+export interface StateValue {
     key: string
     value: {
         bytes: string
@@ -15,7 +15,7 @@ interface StateValue {
 }
 
 // Generic object to hold state keys/values
-interface State {
+export interface State {
    [key: string] : string | number | Uint8Array
 }
 

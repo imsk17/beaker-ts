@@ -474,11 +474,11 @@ export class ApplicationClient {
       !("app-local-state" in acctInfo) ||
       !("key-value" in acctInfo["app-local-state"])
     )
-      throw new Error("No global state found");
+      return {} as AccountState
     return decodeState(
       acctInfo["app-local-state"]["key-value"],
       raw
-    ) as ApplicationState;
+    ) as AccountState;
   }
 
   private getSender(): string {
