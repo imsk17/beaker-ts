@@ -1,4 +1,3 @@
-import algosdk, { AtomicTransactionComposer } from "algosdk";
 import nacl from "tweetnacl";
 import * as bkr from "../../src";
 import { DemoAVM7 } from "./demoavm7_client";
@@ -49,24 +48,16 @@ import { DemoAVM7 } from "./demoavm7_client";
   const message = "Sign me please";
   const sig = bytesigner(new Uint8Array(acct.privateKey), message);
 
-  const verifyMethod = algosdk.getMethodByName(
-    appClient.methods,
-    "ed25519verify_bare"
-  );
-  const noopMethod = algosdk.getMethodByName(appClient.methods, "noop");
+  // Let the client make us a new ATC that we can pass to the next calls to compose methods
+  const atc = await appClient.compose.ed25519verify_bare({ msg: message, pubkey: acct.addr, sig: sig })
 
-  let atc = new AtomicTransactionComposer();
-  await appClient.addMethodCall(atc, verifyMethod, { msg: message, pubkey: acct.addr, sig: sig });
   // Add noop calls to increase our opcode budget since ed25519 is expensive
-  await appClient.addMethodCall(atc, noopMethod, undefined, {
-    note: new Uint8Array(Buffer.from("noncey1")),
-  });
-  await appClient.addMethodCall(atc, noopMethod, undefined, {
-    note: new Uint8Array(Buffer.from("noncey2")),
-  });
+  await appClient.compose.noop({note: new Uint8Array(Buffer.from("noncey1"))}, atc);
+  await appClient.compose.noop({note: new Uint8Array(Buffer.from("noncey2"))}, atc);
 
-  const result = await atc.execute(appClient.client, 4);
-  console.log(result.methodResults);
+  console.log(atc.buildGroup())
 
+  const result = await appClient.execute(atc)
+  console.log(result.returnValue);
 
 })();

@@ -42,6 +42,8 @@ const UINT8_ARRAY_TYPE = factory.createTypeReferenceNode(UINT8_ARRAY_IDENT)
 // sdk types
 const ABI_METHOD_IDENT = factory.createIdentifier("algosdk.ABIMethod")
 const ABI_METHOD_TYPE = factory.createTypeReferenceNode( ABI_METHOD_IDENT)
+const ATC_IDENT = factory.createIdentifier("algosdk.AtomicTransactionComposer")
+const ATC_TYPE = factory.createTypeReferenceNode(ATC_IDENT)
 
 // bkr types
 const ABI_RESULT_IDENT = factory.createIdentifier("bkr.ABIResult")
@@ -221,7 +223,26 @@ function generateClass(appSpec: AppSpec): ts.ClassDeclaration {
       ...appSpec.contract.methods.map((meth) =>
         generateMethodImpl(meth, appSpec)
       ),
+      generateComposeMethods(appSpec),
     ]
+  );
+}
+
+function generateComposeMethods(spec: AppSpec): ts.ClassElement {
+  // create desc property
+  return factory.createPropertyDeclaration(
+    undefined,
+    undefined,
+    factory.createIdentifier("compose"),
+    undefined,
+    undefined,
+    factory.createObjectLiteralExpression(
+      spec.contract.methods.map((meth) => {
+        const [key, value] = generateComposeMethodImpl(meth, spec)
+        return factory.createPropertyAssignment(key, value)
+      }),
+      true,
+    ),
   );
 }
 
@@ -232,26 +253,11 @@ function generateMethodImpl(
 ): ts.ClassElement {
 
   const params: ts.ParameterDeclaration[] = [];
-  const callArgs: ts.Expression[] = [];
   const abiMethodArgs: ts.PropertyAssignment[] = [];
   const argParams: ts.PropertySignature[] = [];
 
   const hint =
     method.name in spec.hints ? spec.hints[method.name] : ({} as Hint);
-
-  callArgs.push(
-    factory.createCallExpression(
-      factory.createIdentifier("algosdk.getMethodByName"), 
-      undefined,
-      [
-        factory.createPropertyAccessExpression(
-          factory.createThis(),
-          factory.createIdentifier("methods")
-        ),
-        factory.createStringLiteral(method.name),
-      ]
-    )
-  );
 
   for (const arg of method.args) {
     if (arg.name === undefined) continue;
@@ -295,12 +301,15 @@ function generateMethodImpl(
           factory.createIdentifier("undefined")
         ),
         factory.createToken(ts.SyntaxKind.QuestionToken),
-        factory.createAwaitExpression(
-          factory.createCallExpression(
-            factory.createIdentifier("this.resolve"),
-            undefined,
-            [factory.createStringLiteral(defaultArg.source), data]
-          )
+        factory.createAsExpression(
+          factory.createAwaitExpression(
+            factory.createCallExpression(
+              factory.createIdentifier("this.resolve"),
+              undefined,
+              [factory.createStringLiteral(defaultArg.source), data]
+            )
+          ),
+          argType
         ),
         factory.createToken(ts.SyntaxKind.ColonToken),
         argVal
@@ -395,6 +404,18 @@ function generateMethodImpl(
     }
   }
 
+  const composeArgs: ts.Expression[] = [];
+
+  if(argParams.length>0){
+    composeArgs.push(factory.createObjectLiteralExpression(abiMethodArgs))
+  }
+
+  composeArgs.push(txnParams)
+
+  const composeExpr =  factory.createAwaitExpression(
+    factory.createCallExpression(factory.createIdentifier("this.compose."+method.name), undefined, composeArgs)
+  )
+
   const body = factory.createBlock(
     [
       factory.createVariableStatement(
@@ -409,14 +430,10 @@ function generateMethodImpl(
                 factory.createCallExpression(
                   factory.createPropertyAccessExpression(
                     factory.createThis(),
-                    factory.createIdentifier("call")
+                    factory.createIdentifier("execute")
                   ),
                   undefined,
-                  [
-                    ...callArgs,
-                    factory.createObjectLiteralExpression(abiMethodArgs),
-                    txnParams,
-                  ]
+                  [ composeExpr ]
                 )
               )
             ),
@@ -453,6 +470,180 @@ function generateMethodImpl(
   );
 
   return methodSpec;
+}
+
+// Creates the methods on the AppClient class used to call specific ABI methods to produce
+// the transactions, which are nested inside a `transactions` property.
+function generateComposeMethodImpl(
+  method: algosdk.ABIMethod,
+  spec: AppSpec
+): [string, ts.ArrowFunction] {
+
+  const params: ts.ParameterDeclaration[] = [];
+  const callArgs: ts.Expression[] = [];
+  const abiMethodArgs: ts.PropertyAssignment[] = [];
+  const argParams: ts.PropertySignature[] = [];
+
+  const hint =
+    method.name in spec.hints ? spec.hints[method.name] : ({} as Hint);
+
+  callArgs.push(
+    factory.createCallExpression(
+      factory.createIdentifier("algosdk.getMethodByName"), 
+      undefined,
+      [
+        factory.createPropertyAccessExpression(
+          factory.createThis(),
+          factory.createIdentifier("methods")
+        ),
+        factory.createStringLiteral(method.name),
+      ]
+    )
+  );
+
+  for (const arg of method.args) {
+    if (arg.name === undefined) continue;
+
+    const argName: ts.Identifier = factory.createIdentifier(arg.name);
+
+    let argType: ts.TypeNode = tsTypeFromAbiType(arg.type.toString());
+    if (
+      hint !== undefined &&
+      hint.structs !== undefined &&
+      arg.name in hint.structs
+    ) {
+      const structHint = hint.structs[arg.name];
+      if (structHint !== undefined)
+        argType = factory.createTypeReferenceNode(structHint.name);
+    }
+
+    const defaultArg =
+      hint?.default_arguments !== undefined &&
+      arg.name in hint.default_arguments
+        ? hint.default_arguments[arg.name]
+        : undefined;
+
+    let argVal: ts.Expression = factory.createIdentifier(`args.${arg.name}`);
+    if (defaultArg !== undefined) {
+      let data: ts.Expression;
+      if (typeof defaultArg.data == "string") {
+        data = factory.createStringLiteral(defaultArg.data);
+      } else if (typeof defaultArg.data == "bigint") {
+        data = factory.createBigIntLiteral(defaultArg.data.toString());
+      } else if (typeof defaultArg.data == "number") {
+        data = factory.createNumericLiteral(defaultArg.data);
+      } else {
+        data = factory.createIdentifier("undefined");
+      }
+
+      argVal = factory.createConditionalExpression(
+        factory.createBinaryExpression(
+          argVal,
+          factory.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
+          factory.createIdentifier("undefined")
+        ),
+        factory.createToken(ts.SyntaxKind.QuestionToken),
+          factory.createAwaitExpression(
+            factory.createCallExpression(
+              factory.createIdentifier("this.resolve"),
+              undefined,
+              [factory.createStringLiteral(defaultArg.source), data]
+            )
+          ),
+        factory.createToken(ts.SyntaxKind.ColonToken),
+        argVal
+      );
+    }
+
+    abiMethodArgs.push(factory.createPropertyAssignment(argName, argVal));
+
+    const optional =
+      defaultArg !== undefined
+        ? factory.createToken(ts.SyntaxKind.QuestionToken)
+        : undefined;
+
+    argParams.push(
+      factory.createPropertySignature(undefined, arg.name, optional, argType)
+    );
+  }
+
+  // Expect args
+  if(argParams.length>0){
+    params.push(
+      factory.createParameterDeclaration(
+        undefined,
+        undefined,
+        undefined,
+        factory.createIdentifier("args"),
+        undefined,
+        factory.createTypeLiteralNode(argParams)
+      )
+    );
+  }
+
+  const txnParams = factory.createIdentifier("txnParams");
+  params.push(
+    factory.createParameterDeclaration(
+      undefined,
+      undefined,
+      undefined,
+      txnParams,
+      factory.createToken(ts.SyntaxKind.QuestionToken),
+      TRANSACTION_OVERRIDES_TYPE,
+    )
+  );
+
+  const atcParam = factory.createIdentifier("atc");
+  params.push(
+    factory.createParameterDeclaration(
+      undefined,
+      undefined,
+      undefined,
+      atcParam,
+      factory.createToken(ts.SyntaxKind.QuestionToken),
+      ATC_TYPE,
+    )
+  );
+
+  const body = factory.createBlock(
+    [
+      factory.createReturnStatement(
+        factory.createCallExpression(
+          factory.createPropertyAccessExpression(
+            factory.createThis(),
+            factory.createIdentifier("addMethodCall")
+          ),
+          undefined,
+          [
+            ...callArgs,
+            factory.createObjectLiteralExpression(abiMethodArgs),
+            txnParams,
+            atcParam,
+          ]
+        )
+      )
+    ],
+    true
+  );
+
+  let retType = factory.createTypeReferenceNode(
+    factory.createIdentifier("Promise"),
+    [
+      factory.createTypeReferenceNode(ATC_IDENT),
+    ]
+  );
+
+  const fncSpec = factory.createArrowFunction(
+    [factory.createModifier(ts.SyntaxKind.AsyncKeyword)],
+    undefined,
+    params,
+    retType,
+    undefined,
+    body,
+  );
+
+
+  return [method.name, fncSpec];
 }
 
 function copySchemaObject(so: Schema): ts.Expression {
