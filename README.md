@@ -16,14 +16,10 @@ class HelloBeaker(Application):
     def hello(self, name: abi.String, *, output: abi.String):
       return output.set(Concat(Bytes("Hello, "), name.get()))
 
-# Write the ApplicationSpec as json
-with open("hello.json", "w") as f:
-  f.write(json.dumps(HelloBeaker().application_spec()))
-
-# OR
-
-with open("contract.json", "w") as f:
-  f.write(json.dumps(HelloBeaker().contract.dictify()))
+if __name__ == "__main__":
+  # Writes contract.json, HelloBeaker.json, approval.teal, and clear.teal 
+  # to the `artifacts` directory
+  HelloBeaker().dump("artifacts")
 ```
 
 > The ApplicationSpec contains the ARC4 ABI spec with some extra bits to help the client
