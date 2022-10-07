@@ -6,13 +6,12 @@ import { generateApplicationClient } from '.';
 import * as fs from 'fs';
 import * as path from 'path';
 
-//const pjson = ../package.json'); // eslint-disable-line
+//const pjson = require('../package.json'); // eslint-disable-line
 const program = new Command();
 
 program
   .name('beaker')
-  .description('Utilities for working with beaker applications')
-  .version('0.0.35');
+  .description('Utilities for working with beaker applications');
 
 program
   .command('generate')
