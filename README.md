@@ -52,7 +52,7 @@ npx beaker generate examples/hello/hello.json examples/hello/
 
 This should create a new file called `hellobeaker_client.ts`
 
-The client can now be imported and used to create or call the app!
+The client can now be imported and used to create or call the app methods by name and with expected types.
 
 ```ts
 // Helpers to get accounts and algod client for sandbox
