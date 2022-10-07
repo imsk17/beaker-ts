@@ -10,7 +10,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
   // Instantiate a CP-AMM client
   //
   const appClient = new ConstantProductAMM({
-    client: bkr.sandbox.getAlgodClient(),
+    client: bkr.clients.sandboxAlgod(),
     signer: acct.signer,
     sender: acct.addr,
   });
