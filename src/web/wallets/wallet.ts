@@ -5,53 +5,72 @@ export interface SignedTxn {
   blob: Uint8Array;
 }
 
+export interface WalletData {
+  acctList: string[];
+  defaultAcctIdx: number;
+  extra: Record<string, any>;
+}
+
 export class Wallet {
+
+  // List of account addresses
   accounts: string[];
-  defaultAccount: number;
+  // Default account index
+  defaultAccountIdx: number;
+  // Which network we're connected to
   network: string;
 
-  constructor(network: string) {
-    this.accounts = [];
-    this.defaultAccount = 0;
+  constructor(network: string, data: WalletData) {
+    this.accounts = data ? data.acctList : [];
+    this.defaultAccountIdx = data ? data.defaultAcctIdx : 0;
     this.network = network;
-  }
-
-  static displayName(): string {
-    return '';
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static img(_inverted: boolean): string {
-    return '';
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-  async connect(_settings?: any): Promise<boolean> {
-    return new Promise(() => {
-      false;
-    });
   }
 
   isConnected(): boolean {
     return this.accounts && this.accounts.length > 0;
   }
 
-  disconnect(): void {
-    return;
+  setDefaultIdx(idx: number): void {
+    this.defaultAccountIdx = idx
   }
 
-  getDefaultAccount(): string {
-    if (!this.isConnected()) throw new Error('No default account set');
+  getDefaultAddress(): string {
+    if (!this.isConnected()) throw new Error('Not connected');
 
-    const defaultAcct = this.accounts[this.defaultAccount];
+    const defaultAcct = this.accounts[this.defaultAccountIdx];
     if (defaultAcct === undefined) throw new Error('No default account set');
     return defaultAcct;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  signTxns(_txns: Transaction[]): Promise<SignedTxn[]> {
-    return new Promise(() => {
-      [];
-    });
+  // Implement in the child class
+  static displayName(): string {
+    throw new Error('Not implemented');
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  static img(_inverted: boolean): string {
+    throw new Error('Not implemented');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  async connect(_settings?: any): Promise<boolean> {
+    throw new Error('Not implemented');
+  }
+
+  disconnect(): void {
+    this.accounts = []
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  sign(_txns: Transaction[]): Promise<SignedTxn[]> {
+    throw new Error('Not implemented');
+  }
+
+  serialize(): WalletData {
+    return {
+        acctList: this.accounts,
+        defaultAcctIdx: this.defaultAccountIdx,
+    } as WalletData
+  }
+
 }

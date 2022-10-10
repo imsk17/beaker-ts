@@ -1,103 +1,113 @@
 import AlgoSignerWallet from './wallets/algosigner';
-import MyAlgoConnectWallet from './wallets/myalgoconnect';
 import InsecureWallet from './wallets/insecure';
+import MyAlgoConnectWallet from './wallets/myalgoconnect';
 import WC from './wallets/walletconnect';
-import type { Wallet, SignedTxn } from './wallets/wallet';
+import type { Wallet, WalletData, SignedTxn } from './wallets/wallet';
 import type { Transaction, TransactionSigner } from 'algosdk';
 import { KMDWallet } from './wallets/kmd';
 
-// window objects
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const sessionStorage: any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const prompt: any;
+
+// lambda to add network to the key so we dont cross streams
+const walletDataKey = (network: string): string => `bkr-${network}-wallet-data`;
+
+// If you implement a new wallet, add it here and to `ImplementedWallets`
+export enum WalletName {
+  WalletConnect = 'wallet-connect',
+  AlgoSigner = 'algo-signer',
+  MyAlgoConnect = 'my-algo-connect',
+  InsecureWallet = 'insecure-wallet',
+  KMDWallet = 'kmd-wallet',
+}
 
 export const ImplementedWallets: Record<string, typeof Wallet> = {
-  'wallet-connect': WC,
-  'algo-signer': AlgoSignerWallet,
-  'my-algo-connect': MyAlgoConnectWallet,
-  'insecure-wallet': InsecureWallet,
-  'kmd-wallet': KMDWallet,
+  [WalletName.WalletConnect]: WC,
+  [WalletName.AlgoSigner]: AlgoSignerWallet,
+  [WalletName.MyAlgoConnect]: MyAlgoConnectWallet,
+  [WalletName.InsecureWallet]: InsecureWallet,
+  [WalletName.KMDWallet]: KMDWallet,
 };
 
-const walletPreferenceKey = 'wallet-preference';
-const acctListKey = 'acct-list';
-const acctPreferenceKey = 'acct-preference';
-const mnemonicKey = 'mnemonic';
+// If you just need a placeholder signer
+export const PlaceHolderSigner: TransactionSigner = (
+  _txnGroup: Transaction[],
+  _indexesToSign: number[],
+): Promise<Uint8Array[]> => {
+  return Promise.resolve([]);
+};
 
-export class SessionWallet {
-  wallet: Wallet;
-  wname: string;
-  network: string;
+// Serialized obj to store in session storage
+export interface SessionWalletData {
+  walletPreference: WalletName;
+  data: WalletData;
+}
 
-  constructor(network: string, wname: string) {
-    this.wname = wname;
-    this.network = network;
+export class SessionWalletManager {
 
-    const wtype = ImplementedWallets[wname];
-    if (wtype === undefined)
-      throw new Error(`Unrecognized wallet option: ${wname}`);
-
-    this.wallet = new wtype(network);
-    this.wallet.accounts = this.accountList();
-    this.wallet.defaultAccount = this.accountIndex();
-
-    this.setWalletPreference(this.wname);
+  static setWalletPreference(network: string, pref: WalletName): void {
+    const walletData = SessionWalletManager.read(network)
+    if(!(pref in ImplementedWallets)) throw new Error(`Unknown wallet preference: ${pref}`)
+    SessionWalletManager.write(network, {...walletData, walletPreference: pref})
   }
 
-  async connect(): Promise<boolean> {
-    if (this.wallet === undefined) return false;
+  static getWallet(network: string, swd: SessionWalletData): Wallet {
+    const w = ImplementedWallets[swd.walletPreference]
+    if(w === undefined) throw new Error("Unknown wallet preference")
+    return new w(network, swd.data)
+  }
 
-    switch (this.wname) {
-      case 'insecure-wallet':
-        const storedMnemonic = this.mnemonic();
+  static async connect(network: string): Promise<boolean> {
+    const swd = SessionWalletManager.read(network)
+    const wallet = SessionWalletManager.getWallet(network, swd)
 
-        const mnemonic = storedMnemonic
-          ? storedMnemonic
-          : prompt(
-              'Paste your mnemonic space delimited (DO NOT USE WITH MAINNET ACCOUNTS)',
-            );
-
-        if (!mnemonic) return false;
-
-        if (await this.wallet.connect(mnemonic)) {
-          this.setMnemonic(mnemonic);
-          this.setAccountList(this.wallet.accounts);
-          this.wallet.defaultAccount = this.accountIndex();
-          return true;
-        }
-
-        break;
-      case 'wallet-connect':
-        await this.wallet.connect((acctList: string[]) => {
-          this.setAccountList(acctList);
-          this.wallet.defaultAccount = this.accountIndex();
-        });
-
-        return true;
-
-      default:
-        if (await this.wallet.connect()) {
-          this.setAccountList(this.wallet.accounts);
-          this.wallet.defaultAccount = this.accountIndex();
-          return true;
-        }
-
-        break;
+    if (await wallet.connect()) {
+      // Persist state in session storage
+      SessionWalletManager.write(network, {...swd, data:wallet.serialize()})
+      return true;
     }
-
     // Fail
-    this.disconnect();
+    wallet.disconnect();
     return false;
   }
 
-  connected(): boolean {
-    return this.wallet !== undefined && this.wallet.isConnected();
+  static disconnect(network: string): void {
+    const swd = SessionWalletManager.read(network)
+    const wallet = SessionWalletManager.getWallet(network, swd)
+
+    if (wallet !== undefined) wallet.disconnect();
+    SessionWalletManager.write(network, {...swd, data:wallet.serialize()})
   }
 
-  getSigner(): TransactionSigner {
+  static connected(network: string): boolean {
+    const swd = SessionWalletManager.read(network)
+    const wallet = SessionWalletManager.getWallet(network, swd)
+    return wallet !== undefined && wallet.isConnected();
+  }
+
+  static setAcctIdx(network: string, idx: number): void {
+    const swd = SessionWalletManager.read(network)
+    const wallet = SessionWalletManager.getWallet(network, swd)
+
+    wallet.setDefaultIdx(idx)
+    SessionWalletManager.write(network, {...swd, data:wallet.serialize()})
+  }
+
+  //
+  static wallet(network: string): Wallet {
+    return SessionWalletManager.getWallet(network, SessionWalletManager.read(network))
+  }
+  static address(network: string): string {
+    const swd = SessionWalletManager.read(network)
+    const wallet = SessionWalletManager.getWallet(network, swd)
+    return wallet.getDefaultAddress();
+  }
+
+  static signer(network: string): TransactionSigner {
+    const swd = SessionWalletManager.read(network)
+    const wallet = SessionWalletManager.getWallet(network, swd)
     return (txnGroup: Transaction[], indexesToSign: number[]) => {
-      return Promise.resolve(this.signTxn(txnGroup)).then(
+      return Promise.resolve(wallet.sign(txnGroup)).then(
         (txns: SignedTxn[]) => {
           return txns
             .map((tx) => {
@@ -109,55 +119,17 @@ export class SessionWallet {
     };
   }
 
-  setAccountList(accts: string[]): void {
-    sessionStorage.setItem(acctListKey, JSON.stringify(accts));
-  }
-  accountList(): string[] {
-    const accts = sessionStorage.getItem(acctListKey);
-    return accts === '' || accts === null ? [] : JSON.parse(accts);
-  }
-
-  setAccountIndex(idx: number): void {
-    this.wallet.defaultAccount = idx;
-    sessionStorage.setItem(acctPreferenceKey, idx.toString());
-  }
-  accountIndex(): number {
-    const idx = sessionStorage.getItem(acctPreferenceKey);
-    return idx === null || idx === '' ? 0 : parseInt(idx, 10);
+  // Static methods
+  static read(network: string): SessionWalletData {
+    const data = sessionStorage.getItem(walletDataKey(network));
+    return (
+      data === null || data === ''
+        ? { data: { acctList: [], defaultAcctIdx: 0 } }
+        : JSON.parse(data)
+    ) as SessionWalletData;
   }
 
-  setWalletPreference(wname: string): void {
-    this.wname = wname;
-    sessionStorage.setItem(walletPreferenceKey, wname);
-  }
-  walletPreference(): string {
-    const wp = sessionStorage.getItem(walletPreferenceKey);
-    return wp === null ? '' : wp;
-  }
-
-  setMnemonic(m: string): void {
-    sessionStorage.setItem(mnemonicKey, m);
-  }
-  mnemonic(): string {
-    const mn = sessionStorage.getItem(mnemonicKey);
-    return mn === null ? '' : mn;
-  }
-
-  disconnect(): void {
-    if (this.wallet !== undefined) this.wallet.disconnect();
-    sessionStorage.setItem(walletPreferenceKey, '');
-    sessionStorage.setItem(acctPreferenceKey, '');
-    sessionStorage.setItem(acctListKey, '');
-    sessionStorage.setItem(mnemonicKey, '');
-  }
-
-  getDefaultAccount(): string {
-    if (!this.connected()) return '';
-    return this.wallet.getDefaultAccount();
-  }
-
-  async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
-    if (!this.connected() && !(await this.connect())) return [];
-    return this.wallet.signTxns(txns);
+  static write(network: string, data: SessionWalletData): void {
+    sessionStorage.setItem(walletDataKey(network), JSON.stringify(data));
   }
 }

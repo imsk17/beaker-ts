@@ -1,24 +1,29 @@
 import algosdk from 'algosdk';
-import { Wallet, SignedTxn } from './wallet';
+import { WalletData, Wallet, SignedTxn } from './wallet';
 import type { KMDConfig } from '../../sandbox/accounts';
 import { sandbox } from '../..';
 
 export class KMDWallet extends Wallet {
-  pkToSk: Record<string, algosdk.Account>;
+  pkToSk: Record<string, Uint8Array>;
 
-  constructor(network: string) {
-    super(network);
+  constructor(network: string, data: WalletData) {
+    super(network, data);
     this.pkToSk = {};
+
+    const extra = data.extra
+    if (extra !== undefined && "pkMap" in extra){
+      for(const [k,v] of Object.entries(extra["pkMap"])){
+        // @ts-ignore
+        this.pkToSk[k] = Buffer.from(v, "base64");
+      }
+    }
   }
 
-  override async connect(config: KMDConfig): Promise<boolean> {
+  override async connect(config?: KMDConfig): Promise<boolean> {
     this.accounts = [];
     const accts = await sandbox.getAccounts(config);
     for (const sba of accts) {
-      this.pkToSk[sba.addr] = {
-        sk: sba.privateKey,
-        addr: sba.addr,
-      } as algosdk.Account;
+      this.pkToSk[sba.addr] = new Uint8Array(sba.privateKey);
       this.accounts.push(sba.addr);
     }
     return true;
@@ -41,9 +46,26 @@ export class KMDWallet extends Wallet {
     return KMDWallet.img(inverted);
   }
 
-  override async signTxns(txns: algosdk.Transaction[]): Promise<SignedTxn[]> {
+  override disconnect(): void {
+      this.accounts = []
+      this.pkToSk = {}
+  }
+  override serialize(): WalletData {
+    const pkMap: Record<string, string> = {}
+    for(const [k,v] of Object.entries(this.pkToSk)){
+      pkMap[k] = Buffer.from(v.buffer).toString("base64")
+    }
+
+    return {
+        acctList:this.accounts ,
+        defaultAcctIdx:this.defaultAccountIdx, 
+        extra: { pkMap: pkMap }
+    }
+  }
+
+  override async sign(txns: algosdk.Transaction[]): Promise<SignedTxn[]> {
     const signed = [];
-    const defaultAddr = this.getDefaultAccount();
+    const defaultAddr = this.getDefaultAddress();
     for (const txidx in txns) {
       const txn = txns[txidx];
       if (txn === undefined) continue;
@@ -52,7 +74,7 @@ export class KMDWallet extends Wallet {
       const acct = this.pkToSk[addr];
 
       if (acct !== undefined && addr === defaultAddr) {
-        signed.push({ txID: txn.txID(), blob: txn.signTxn(acct.sk) });
+        signed.push({ txID: txn.txID(), blob: txn.signTxn(acct) });
       } else {
         signed.push({ txID: '', blob: new Uint8Array() });
       }

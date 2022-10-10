@@ -1,5 +1,5 @@
 import algosdk, { Transaction } from 'algosdk';
-import { SignedTxn, Wallet } from './wallet';
+import { WalletData, SignedTxn, Wallet } from './wallet';
 import MyAlgo from '@randlabs/myalgo-connect';
 
 const logoInverted =
@@ -17,8 +17,8 @@ const logo =
 class MyAlgoConnectWallet extends Wallet {
   walletConn: MyAlgo;
 
-  constructor(network: string) {
-    super(network);
+  constructor(network: string, data: WalletData) {
+    super(network, data);
     this.walletConn = new MyAlgo();
   }
 
@@ -83,8 +83,8 @@ class MyAlgoConnectWallet extends Wallet {
     return signedTxns;
   }
 
-  async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
-    const defaultAcct = this.getDefaultAccount();
+  override async sign(txns: Transaction[]): Promise<SignedTxn[]> {
+    const defaultAcct = this.getDefaultAddress();
     if (defaultAcct === undefined) return [];
 
     //if (this.permissionCallback) {

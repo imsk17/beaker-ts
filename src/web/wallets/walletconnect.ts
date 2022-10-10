@@ -1,5 +1,5 @@
 import algosdk, { Transaction } from 'algosdk';
-import { SignedTxn, Wallet } from './wallet';
+import { WalletData, SignedTxn, Wallet } from './wallet';
 
 import WalletConnect from '@walletconnect/client';
 import WalletConnectQRCodeModal from 'algorand-walletconnect-qrcode-modal';
@@ -11,8 +11,8 @@ const logo =
 class WC extends Wallet {
   connector: WalletConnect;
 
-  constructor(network: string) {
-    super(network);
+  constructor(network: string, data: WalletData) {
+    super(network, data);
     const bridge = 'https://bridge.walletconnect.org';
     this.connector = new WalletConnect({
       bridge,
@@ -91,8 +91,8 @@ class WC extends Wallet {
     this.connector.killSession();
   }
 
-  async signTxn(txns: Transaction[]): Promise<SignedTxn[]> {
-    const defaultAddress = this.getDefaultAccount();
+  override async sign(txns: Transaction[]): Promise<SignedTxn[]> {
+    const defaultAddress = this.getDefaultAddress();
     const txnsToSign = txns.map((txn) => {
       const encodedTxn = Buffer.from(
         algosdk.encodeUnsignedTransaction(txn),
