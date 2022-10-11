@@ -13,8 +13,8 @@ import { ExpensiveApp } from "./expensiveapp_client";
     sender: acct.addr,
   });
 
-  const [appId, appAddr, txId] = await appClient.create();
-  console.log(`Created app ${appId} with address ${appAddr} in tx ${txId}`);
+  const {appId, appAddress, txId} = await appClient.create();
+  console.log(`Created app ${appId} with address ${appAddress} in tx ${txId}`);
 
   const sp = await appClient.getSuggestedParams();
   sp.flatFee = true;
@@ -24,7 +24,7 @@ import { ExpensiveApp } from "./expensiveapp_client";
     ptxn: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       suggestedParams: sp,
-      to: appAddr,
+      to: appAddress,
       amount: BigInt(1e6),
     }),
   });

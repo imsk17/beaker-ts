@@ -41,7 +41,7 @@ export const PlaceHolderSigner: TransactionSigner = (
 export interface SessionWalletData {
   walletPreference: WalletName;
   data: WalletData;
-}
+};
 
 export class SessionWalletManager {
 

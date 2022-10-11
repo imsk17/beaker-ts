@@ -83,6 +83,11 @@ export class ABIResult<T extends ABIReturnType> {
   }
 }
 
+export type CreateResult = {
+  appId: number;
+  appAddress: string;
+  txId: string;
+}
 export class ApplicationClient {
   client: algosdk.Algodv2;
 
@@ -157,7 +162,7 @@ export class ApplicationClient {
 
   async create(
     txParams?: TransactionOverrides,
-  ): Promise<[number, string, string]> {
+  ): Promise<CreateResult> {
     await this.ensurePrograms();
 
     if (
@@ -195,7 +200,7 @@ export class ApplicationClient {
       const txinfo = await this.client.pendingTransactionInformation(txid).do();
       this.appId = txinfo['application-index'];
       this.appAddress = algosdk.getApplicationAddress(this.appId);
-      return [this.appId, this.appAddress, txid];
+      return {appId: this.appId, appAddress: this.appAddress, txId: txid};
     } catch (e) {
       throw this.wrapLogicError(e as Error);
     }

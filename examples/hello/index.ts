@@ -11,8 +11,8 @@ import {HelloBeaker} from "./hellobeaker_client";
     sender: acct.addr,
   });
 
-  const [appId, appAddr, txId] = await appClient.create();
-  console.log(`Created app ${appId} with address ${appAddr} in tx ${txId}`);
+  const {appId, appAddress, txId} = await appClient.create();
+  console.log(`Created app ${appId} with address ${appAddress} in tx ${txId}`);
 
   const result = await appClient.hello({name: "Beaker"});
   console.log(result.returnValue); // Hello, Beaker
