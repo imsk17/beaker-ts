@@ -84,6 +84,8 @@ export class SessionWalletManager {
 
   static connected(network: string): boolean {
     const swd = SessionWalletManager.read(network);
+    if(swd.walletPreference === undefined) return false;
+
     const wallet = SessionWalletManager.getWallet(network, swd);
     return wallet !== undefined && wallet.isConnected();
   }
