@@ -10,11 +10,11 @@ export class KMDWallet extends Wallet {
     super(network, data);
     this.pkToSk = {};
 
-    const extra = data.extra
-    if (extra !== undefined && "pkMap" in extra){
-      for(const [k,v] of Object.entries(extra["pkMap"])){
+    const extra = data.extra;
+    if (extra !== undefined && 'pkMap' in extra) {
+      for (const [k, v] of Object.entries(extra['pkMap'])) {
         // @ts-ignore
-        this.pkToSk[k] = Buffer.from(v, "base64");
+        this.pkToSk[k] = Buffer.from(v, 'base64');
       }
     }
   }
@@ -47,20 +47,20 @@ export class KMDWallet extends Wallet {
   }
 
   override disconnect(): void {
-      this.accounts = []
-      this.pkToSk = {}
+    this.accounts = [];
+    this.pkToSk = {};
   }
   override serialize(): WalletData {
-    const pkMap: Record<string, string> = {}
-    for(const [k,v] of Object.entries(this.pkToSk)){
-      pkMap[k] = Buffer.from(v.buffer).toString("base64")
+    const pkMap: Record<string, string> = {};
+    for (const [k, v] of Object.entries(this.pkToSk)) {
+      pkMap[k] = Buffer.from(v.buffer).toString('base64');
     }
 
     return {
-        acctList:this.accounts ,
-        defaultAcctIdx:this.defaultAccountIdx, 
-        extra: { pkMap: pkMap }
-    }
+      acctList: this.accounts,
+      defaultAcctIdx: this.defaultAccountIdx,
+      extra: { pkMap: pkMap },
+    };
   }
 
   override async sign(txns: algosdk.Transaction[]): Promise<SignedTxn[]> {

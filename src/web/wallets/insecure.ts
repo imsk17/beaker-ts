@@ -15,11 +15,11 @@ class InsecureWallet extends Wallet {
     super(network, data);
     this.pkToSk = {};
 
-    const extra = data.extra
-    if (extra !== undefined && "pkMap" in extra){
-      for(const [k,v] of Object.entries(extra["pkMap"])){
+    const extra = data.extra;
+    if (extra !== undefined && 'pkMap' in extra) {
+      for (const [k, v] of Object.entries(extra['pkMap'])) {
         // @ts-ignore
-        this.pkToSk[k] = Buffer.from(v, "base64");
+        this.pkToSk[k] = Buffer.from(v, 'base64');
       }
     }
   }
@@ -35,7 +35,7 @@ class InsecureWallet extends Wallet {
 
     const sk = algosdk.mnemonicToSecretKey(mnemonic);
     this.accounts = [sk.addr];
-    this.pkToSk = { [sk.addr]:  new Uint8Array(sk.sk) };
+    this.pkToSk = { [sk.addr]: new Uint8Array(sk.sk) };
     return true;
   }
 
@@ -69,18 +69,17 @@ class InsecureWallet extends Wallet {
   }
 
   override serialize(): WalletData {
-    const pkMap: Record<string, string> = {}
-    for(const [k,v] of Object.entries(this.pkToSk)){
-      pkMap[k] = Buffer.from(v.buffer).toString("base64")
+    const pkMap: Record<string, string> = {};
+    for (const [k, v] of Object.entries(this.pkToSk)) {
+      pkMap[k] = Buffer.from(v.buffer).toString('base64');
     }
 
     return {
-        acctList:this.accounts ,
-        defaultAcctIdx:this.defaultAccountIdx, 
-        extra: { pkMap: pkMap }
-    }
+      acctList: this.accounts,
+      defaultAcctIdx: this.defaultAccountIdx,
+      extra: { pkMap: pkMap },
+    };
   }
-
 
   override async sign(txns: Transaction[]): Promise<SignedTxn[]> {
     const signed = [];

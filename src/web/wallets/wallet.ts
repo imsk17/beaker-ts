@@ -12,7 +12,6 @@ export interface WalletData {
 }
 
 export class Wallet {
-
   // List of account addresses
   accounts: string[];
   // Default account index
@@ -31,7 +30,7 @@ export class Wallet {
   }
 
   setDefaultIdx(idx: number): void {
-    this.defaultAccountIdx = idx
+    this.defaultAccountIdx = idx;
   }
 
   getDefaultAddress(): string {
@@ -58,7 +57,7 @@ export class Wallet {
   }
 
   disconnect(): void {
-    this.accounts = []
+    this.accounts = [];
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -68,9 +67,8 @@ export class Wallet {
 
   serialize(): WalletData {
     return {
-        acctList: this.accounts,
-        defaultAcctIdx: this.defaultAccountIdx,
-    } as WalletData
+      acctList: this.accounts,
+      defaultAcctIdx: this.defaultAccountIdx,
+    } as WalletData;
   }
-
 }

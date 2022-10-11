@@ -41,29 +41,32 @@ export const PlaceHolderSigner: TransactionSigner = (
 export interface SessionWalletData {
   walletPreference: WalletName;
   data: WalletData;
-};
+}
 
 export class SessionWalletManager {
-
   static setWalletPreference(network: string, pref: WalletName): void {
-    const walletData = SessionWalletManager.read(network)
-    if(!(pref in ImplementedWallets)) throw new Error(`Unknown wallet preference: ${pref}`)
-    SessionWalletManager.write(network, {...walletData, walletPreference: pref})
+    const walletData = SessionWalletManager.read(network);
+    if (!(pref in ImplementedWallets))
+      throw new Error(`Unknown wallet preference: ${pref}`);
+    SessionWalletManager.write(network, {
+      ...walletData,
+      walletPreference: pref,
+    });
   }
 
   static getWallet(network: string, swd: SessionWalletData): Wallet {
-    const w = ImplementedWallets[swd.walletPreference]
-    if(w === undefined) throw new Error("Unknown wallet preference")
-    return new w(network, swd.data)
+    const w = ImplementedWallets[swd.walletPreference];
+    if (w === undefined) throw new Error('Unknown wallet preference');
+    return new w(network, swd.data);
   }
 
   static async connect(network: string): Promise<boolean> {
-    const swd = SessionWalletManager.read(network)
-    const wallet = SessionWalletManager.getWallet(network, swd)
+    const swd = SessionWalletManager.read(network);
+    const wallet = SessionWalletManager.getWallet(network, swd);
 
     if (await wallet.connect()) {
       // Persist state in session storage
-      SessionWalletManager.write(network, {...swd, data:wallet.serialize()})
+      SessionWalletManager.write(network, { ...swd, data: wallet.serialize() });
       return true;
     }
     // Fail
@@ -72,40 +75,43 @@ export class SessionWalletManager {
   }
 
   static disconnect(network: string): void {
-    const swd = SessionWalletManager.read(network)
-    const wallet = SessionWalletManager.getWallet(network, swd)
+    const swd = SessionWalletManager.read(network);
+    const wallet = SessionWalletManager.getWallet(network, swd);
 
     if (wallet !== undefined) wallet.disconnect();
-    SessionWalletManager.write(network, {...swd, data:wallet.serialize()})
+    SessionWalletManager.write(network, { ...swd, data: wallet.serialize() });
   }
 
   static connected(network: string): boolean {
-    const swd = SessionWalletManager.read(network)
-    const wallet = SessionWalletManager.getWallet(network, swd)
+    const swd = SessionWalletManager.read(network);
+    const wallet = SessionWalletManager.getWallet(network, swd);
     return wallet !== undefined && wallet.isConnected();
   }
 
   static setAcctIdx(network: string, idx: number): void {
-    const swd = SessionWalletManager.read(network)
-    const wallet = SessionWalletManager.getWallet(network, swd)
+    const swd = SessionWalletManager.read(network);
+    const wallet = SessionWalletManager.getWallet(network, swd);
 
-    wallet.setDefaultIdx(idx)
-    SessionWalletManager.write(network, {...swd, data:wallet.serialize()})
+    wallet.setDefaultIdx(idx);
+    SessionWalletManager.write(network, { ...swd, data: wallet.serialize() });
   }
 
   //
   static wallet(network: string): Wallet {
-    return SessionWalletManager.getWallet(network, SessionWalletManager.read(network))
+    return SessionWalletManager.getWallet(
+      network,
+      SessionWalletManager.read(network),
+    );
   }
   static address(network: string): string {
-    const swd = SessionWalletManager.read(network)
-    const wallet = SessionWalletManager.getWallet(network, swd)
+    const swd = SessionWalletManager.read(network);
+    const wallet = SessionWalletManager.getWallet(network, swd);
     return wallet.getDefaultAddress();
   }
 
   static signer(network: string): TransactionSigner {
-    const swd = SessionWalletManager.read(network)
-    const wallet = SessionWalletManager.getWallet(network, swd)
+    const swd = SessionWalletManager.read(network);
+    const wallet = SessionWalletManager.getWallet(network, swd);
     return (txnGroup: Transaction[], indexesToSign: number[]) => {
       return Promise.resolve(wallet.sign(txnGroup)).then(
         (txns: SignedTxn[]) => {
