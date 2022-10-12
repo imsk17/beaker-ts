@@ -64,11 +64,27 @@ export class SessionWalletManager {
     const swd = SessionWalletManager.read(network);
     const wallet = SessionWalletManager.getWallet(network, swd);
 
-    if (await wallet.connect()) {
-      // Persist state in session storage
-      SessionWalletManager.write(network, { ...swd, data: wallet.serialize() });
-      return true;
+    switch (swd.walletPreference) {
+      case WalletName.WalletConnect:
+        return await wallet.connect(() => {
+          // Persist state in session storage in a callback
+          SessionWalletManager.write(network, {
+            ...swd,
+            data: wallet.serialize(),
+          });
+        });
+
+      default:
+        if (await wallet.connect()) {
+          // Persist state in session storage
+          SessionWalletManager.write(network, {
+            ...swd,
+            data: wallet.serialize(),
+          });
+          return true;
+        }
     }
+
     // Fail
     wallet.disconnect();
     return false;
@@ -84,7 +100,7 @@ export class SessionWalletManager {
 
   static connected(network: string): boolean {
     const swd = SessionWalletManager.read(network);
-    if(swd.walletPreference === undefined) return false;
+    if (swd.walletPreference === undefined) return false;
 
     const wallet = SessionWalletManager.getWallet(network, swd);
     return wallet !== undefined && wallet.isConnected();

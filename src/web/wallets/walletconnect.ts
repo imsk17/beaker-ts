@@ -20,8 +20,7 @@ class WC extends Wallet {
     });
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  override async connect(cb: any): Promise<boolean> {
+  override async connect(cb: () => void): Promise<boolean> {
     // Check if connection is already established
     if (this.connector.connected) return true;
 
@@ -33,8 +32,8 @@ class WC extends Wallet {
         throw error;
       }
       const { accounts } = payload.params[0];
-      cb(accounts);
       this.accounts = accounts;
+      cb();
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,8 +42,8 @@ class WC extends Wallet {
         throw error;
       }
       const { accounts } = payload.params[0];
-      cb(accounts);
       this.accounts = accounts;
+      cb();
     });
 
     this.connector.on('disconnect', (error: Error | null) => {
@@ -88,6 +87,8 @@ class WC extends Wallet {
   }
 
   override disconnect(): void {
+    this.accounts = [];
+    this.defaultAccountIdx = 0;
     this.connector.killSession();
   }
 
