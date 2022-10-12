@@ -459,11 +459,21 @@ export class ApplicationClient {
   }
 
   async getSuggestedParams(
-    txParams?: TransactionOverrides,
+    txParams?: TransactionOverrides, coverInners?: number
   ): Promise<algosdk.SuggestedParams> {
-    if (txParams !== undefined && txParams.suggestedParams !== undefined)
-      return txParams.suggestedParams;
-    return await this.client.getTransactionParams().do();
+    let params: algosdk.SuggestedParams
+    if (txParams !== undefined && txParams.suggestedParams !== undefined){
+      params = txParams.suggestedParams;
+    } else {
+      params = await this.client.getTransactionParams().do();
+    }
+
+    if(coverInners !== undefined){
+      params.flatFee = true
+      params.fee = 1000 * coverInners
+    }
+
+    return params
   }
 
   async getApplicationState(raw?: boolean): Promise<ApplicationState> {
