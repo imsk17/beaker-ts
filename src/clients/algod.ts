@@ -32,15 +32,15 @@ export const AlgodAPIs: Record<APIProvider, NetworkConfig> = {
   [APIProvider.AlgoExplorer]: {
     [Network.SandNet]: undefined,
     [Network.BetaNet]: {
-      host: 'https://node.betanet.algoexplorerapi.io/',
+      host: 'https://node.betanet.algoexplorerapi.io',
       port: '',
     },
     [Network.TestNet]: {
-      host: 'https://node.testnet.algoexplorerapi.io/',
+      host: 'https://node.testnet.algoexplorerapi.io',
       port: '',
     },
     [Network.MainNet]: {
-      host: 'https://node.algoexplorerapi.io/',
+      host: 'https://node.algoexplorerapi.io',
       port: '',
     },
   },
