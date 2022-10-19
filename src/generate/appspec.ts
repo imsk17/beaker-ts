@@ -30,7 +30,7 @@ export interface DeclaredSchemaValueSpec {
   static: boolean;
 }
 
-export interface DynamicSchemaValueSpec {
+export interface ReservedSchemaValueSpec {
   type: AVMType;
   desc: string;
   max_keys: number;
@@ -38,7 +38,7 @@ export interface DynamicSchemaValueSpec {
 
 export interface Schema {
   declared: Record<string, DeclaredSchemaValueSpec>;
-  dynamic: Record<string, DynamicSchemaValueSpec>;
+  reserved: Record<string, ReservedSchemaValueSpec>;
 }
 
 export type StateSchema = {
@@ -55,7 +55,7 @@ export function getStateSchema(s: Schema): StateSchema {
     if (item[1].type == AVMType.uint64) uints += 1;
   }
 
-  for (const item of Object.entries(s.dynamic)) {
+  for (const item of Object.entries(s.reserved)) {
     if (item[1].type == AVMType.bytes) bytes += item[1].max_keys;
     if (item[1].type == AVMType.uint64) uints += item[1].max_keys;
   }

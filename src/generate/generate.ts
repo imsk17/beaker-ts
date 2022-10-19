@@ -1,7 +1,7 @@
 import type {
   AppSpec,
   DeclaredSchemaValueSpec,
-  DynamicSchemaValueSpec,
+  ReservedSchemaValueSpec,
   Hint,
   Schema,
   Struct,
@@ -658,8 +658,8 @@ function copySchemaObject(so: Schema): ts.Expression {
     },
   );
 
-  const dynamicAppSchemaProps = Object.entries(so.dynamic).map(
-    (sv: [string, DynamicSchemaValueSpec]): ts.PropertyAssignment => {
+  const reservedAppSchemaProps = Object.entries(so.reserved).map(
+    (sv: [string, ReservedSchemaValueSpec]): ts.PropertyAssignment => {
       return factory.createPropertyAssignment(
         factory.createIdentifier(sv[0]),
         factory.createObjectLiteralExpression([
@@ -683,8 +683,8 @@ function copySchemaObject(so: Schema): ts.Expression {
       factory.createObjectLiteralExpression(declaredAppSchemaProps),
     ),
     factory.createPropertyAssignment(
-      factory.createIdentifier('dynamic'),
-      factory.createObjectLiteralExpression(dynamicAppSchemaProps),
+      factory.createIdentifier('reserved'),
+      factory.createObjectLiteralExpression(reservedAppSchemaProps),
     ),
   ]);
 }

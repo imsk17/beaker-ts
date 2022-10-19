@@ -30,6 +30,11 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     `Created app with ID: ${appId} and address: ${appAddress} in tx ${txId}`
   );
 
+  const sp = await appClient.getSuggestedParams();
+  sp.flatFee = true
+  // Overpay on fee because we're lazy
+  sp.fee = 5000
+
   //
   // Bootstrap the app with assets we're using
   //
@@ -37,7 +42,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     seed: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddress,
-      suggestedParams: await appClient.getSuggestedParams(),
+      suggestedParams: sp,
       amount: BigInt(1e6),
     }),
     a_asset: assetA,
@@ -55,7 +60,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: acct.addr,
-      suggestedParams: await appClient.getSuggestedParams(),
+      suggestedParams: sp,
       amount: 0,
       assetIndex: Number(poolToken),
     });
@@ -71,14 +76,14 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     a_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddress,
-      suggestedParams: await appClient.getSuggestedParams(),
+      suggestedParams: sp,
       amount: BigInt(1e8),
       assetIndex: Number(assetA),
     }),
     b_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddress,
-      suggestedParams: await appClient.getSuggestedParams(),
+      suggestedParams: sp,
       amount: BigInt(1e6),
       assetIndex: Number(assetB),
     }),
@@ -92,7 +97,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     swap_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddress,
-      suggestedParams: await appClient.getSuggestedParams(),
+      suggestedParams: sp,
       amount: BigInt(1e3),
       assetIndex: Number(assetA),
     }),
@@ -106,7 +111,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     swap_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddress,
-      suggestedParams: await appClient.getSuggestedParams(),
+      suggestedParams: sp,
       amount: BigInt(1e3),
       assetIndex: Number(assetB),
     }),
@@ -120,7 +125,7 @@ import { ConstantProductAMM } from "./constantproductamm_client";
     pool_xfer: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
       from: acct.addr,
       to: appAddress,
-      suggestedParams: await appClient.getSuggestedParams(),
+      suggestedParams: sp,
       amount: BigInt(10),
       assetIndex: Number(poolToken),
     }),
