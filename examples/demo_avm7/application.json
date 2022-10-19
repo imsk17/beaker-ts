@@ -1,0 +1,184 @@
+{
+    "hints": {
+        "block": {
+            "structs": {
+                "output": {
+                    "name": "BlockDetails",
+                    "elements": [
+                        [
+                            "ts",
+                            "uint64"
+                        ],
+                        [
+                            "seed",
+                            "byte[32]"
+                        ]
+                    ]
+                }
+            }
+        },
+        "json_ref": {
+            "structs": {
+                "output": {
+                    "name": "JsonExampleResult",
+                    "elements": [
+                        [
+                            "string_key",
+                            "string"
+                        ],
+                        [
+                            "uint_key",
+                            "uint64"
+                        ],
+                        [
+                            "obj_key",
+                            "string"
+                        ]
+                    ]
+                }
+            }
+        }
+    },
+    "source": {
+        "approval": "I3ByYWdtYSB2ZXJzaW9uIDcKaW50Y2Jsb2NrIDAgMQpieXRlY2Jsb2NrIDB4MTUxZjdjNzUKdHhuIE51bUFwcEFyZ3MKaW50Y18wIC8vIDAKPT0KYm56IG1haW5fbDE4CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4YTViNzk2NWQgLy8gImI2NGRlY29kZShzdHJpbmcpc3RyaW5nIgo9PQpibnogbWFpbl9sMTcKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHgzN2YyOTM4OCAvLyAiYmxvY2sodWludDY0KSh1aW50NjQsYnl0ZVszMl0pIgo9PQpibnogbWFpbl9sMTYKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMApwdXNoYnl0ZXMgMHg5MzQ1ZjY0MSAvLyAiZWQyNTUxOXZlcmlmeV9iYXJlKHN0cmluZyxhZGRyZXNzLGJ5dGVbNjRdKWJvb2wiCj09CmJueiBtYWluX2wxNQp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweGU4MGUyOGJhIC8vICJqc29uX3JlZihzdHJpbmcpKHN0cmluZyx1aW50NjQsc3RyaW5nKSIKPT0KYm56IG1haW5fbDE0CnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4ZTgzYTg3YWIgLy8gIm5vb3AoKXZvaWQiCj09CmJueiBtYWluX2wxMwp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDJlOTg1NWVjIC8vICJyZXBsYWNlKHN0cmluZyx1aW50NjQsc3RyaW5nKXN0cmluZyIKPT0KYm56IG1haW5fbDEyCnR4bmEgQXBwbGljYXRpb25BcmdzIDAKcHVzaGJ5dGVzIDB4ZTYwOTU1YjggLy8gInNoYTNfMjU2KHN0cmluZylieXRlW10iCj09CmJueiBtYWluX2wxMQp0eG5hIEFwcGxpY2F0aW9uQXJncyAwCnB1c2hieXRlcyAweDI1M2YzOTgyIC8vICJ2cmZfdmVyaWZ5KGJ5dGVbXSxieXRlWzgwXSxhZGRyZXNzKWJ5dGVbNjRdIgo9PQpibnogbWFpbl9sMTAKZXJyCm1haW5fbDEwOgp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCnN0b3JlIDMwCnR4bmEgQXBwbGljYXRpb25BcmdzIDIKc3RvcmUgMzEKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMwpzdG9yZSAzMgpsb2FkIDMwCmxvYWQgMzEKbG9hZCAzMgpjYWxsc3ViIHZyZnZlcmlmeV8xMApzdG9yZSAzMwpieXRlY18wIC8vIDB4MTUxZjdjNzUKbG9hZCAzMwpjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2wxMToKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQomJgphc3NlcnQKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQpjYWxsc3ViIHNoYTMyNTZfOQpzdG9yZSAyOApieXRlY18wIC8vIDB4MTUxZjdjNzUKbG9hZCAyOApjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2wxMjoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQomJgphc3NlcnQKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQpzdG9yZSAyMQp0eG5hIEFwcGxpY2F0aW9uQXJncyAyCmJ0b2kKc3RvcmUgMjIKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMwpzdG9yZSAyMwpsb2FkIDIxCmxvYWQgMjIKbG9hZCAyMwpjYWxsc3ViIHJlcGxhY2VfOApzdG9yZSAyNApieXRlY18wIC8vIDB4MTUxZjdjNzUKbG9hZCAyNApjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2wxMzoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQomJgphc3NlcnQKY2FsbHN1YiBub29wXzcKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDE0Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmNhbGxzdWIganNvbnJlZl82CnN0b3JlIDEyCmJ5dGVjXzAgLy8gMHgxNTFmN2M3NQpsb2FkIDEyCmNvbmNhdApsb2cKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDE1Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCnN0b3JlIDYKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMgpzdG9yZSA3CnR4bmEgQXBwbGljYXRpb25BcmdzIDMKc3RvcmUgOApsb2FkIDYKbG9hZCA3CmxvYWQgOApjYWxsc3ViIGVkMjU1MTl2ZXJpZnliYXJlXzUKc3RvcmUgOQpieXRlY18wIC8vIDB4MTUxZjdjNzUKcHVzaGJ5dGVzIDB4MDAgLy8gMHgwMAppbnRjXzAgLy8gMApsb2FkIDkKc2V0Yml0CmNvbmNhdApsb2cKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDE2Ogp0eG4gT25Db21wbGV0aW9uCmludGNfMCAvLyBOb09wCj09CnR4biBBcHBsaWNhdGlvbklECmludGNfMCAvLyAwCiE9CiYmCmFzc2VydAp0eG5hIEFwcGxpY2F0aW9uQXJncyAxCmJ0b2kKY2FsbHN1YiBibG9ja180CnN0b3JlIDIKYnl0ZWNfMCAvLyAweDE1MWY3Yzc1CmxvYWQgMgpjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2wxNzoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAohPQomJgphc3NlcnQKdHhuYSBBcHBsaWNhdGlvbkFyZ3MgMQpjYWxsc3ViIGI2NGRlY29kZV8zCnN0b3JlIDAKYnl0ZWNfMCAvLyAweDE1MWY3Yzc1CmxvYWQgMApjb25jYXQKbG9nCmludGNfMSAvLyAxCnJldHVybgptYWluX2wxODoKdHhuIE9uQ29tcGxldGlvbgppbnRjXzAgLy8gTm9PcAo9PQpibnogbWFpbl9sMjIKdHhuIE9uQ29tcGxldGlvbgpwdXNoaW50IDUgLy8gRGVsZXRlQXBwbGljYXRpb24KPT0KYm56IG1haW5fbDIxCmVycgptYWluX2wyMToKdHhuIEFwcGxpY2F0aW9uSUQKaW50Y18wIC8vIDAKIT0KYXNzZXJ0CmNhbGxzdWIgZGVsZXRlXzIKaW50Y18xIC8vIDEKcmV0dXJuCm1haW5fbDIyOgp0eG4gQXBwbGljYXRpb25JRAppbnRjXzAgLy8gMAo9PQphc3NlcnQKY2FsbHN1YiBjcmVhdGVfMAppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIGNyZWF0ZQpjcmVhdGVfMDoKaW50Y18xIC8vIDEKcmV0dXJuCgovLyBhdXRoX29ubHkKYXV0aG9ubHlfMToKZ2xvYmFsIENyZWF0b3JBZGRyZXNzCj09CnJldHN1YgoKLy8gZGVsZXRlCmRlbGV0ZV8yOgp0eG4gU2VuZGVyCmNhbGxzdWIgYXV0aG9ubHlfMQovLyB1bmF1dGhvcml6ZWQKYXNzZXJ0CmludGNfMSAvLyAxCnJldHVybgoKLy8gYjY0ZGVjb2RlCmI2NGRlY29kZV8zOgpleHRyYWN0IDIgMApiYXNlNjRfZGVjb2RlIFN0ZEVuY29kaW5nCnN0b3JlIDEKbG9hZCAxCmxlbgppdG9iCmV4dHJhY3QgNiAwCmxvYWQgMQpjb25jYXQKc3RvcmUgMQpsb2FkIDEKcmV0c3ViCgovLyBibG9jawpibG9ja180OgpzdG9yZSAzCmxvYWQgMwpibG9jayBCbGtUaW1lc3RhbXAKc3RvcmUgNApsb2FkIDMKYmxvY2sgQmxrU2VlZApzdG9yZSA1CnB1c2hpbnQgMzIgLy8gMzIKbG9hZCA1Cmxlbgo9PQphc3NlcnQKbG9hZCA0Cml0b2IKbG9hZCA1CmNvbmNhdApyZXRzdWIKCi8vIGVkMjU1MTl2ZXJpZnlfYmFyZQplZDI1NTE5dmVyaWZ5YmFyZV81OgpzdG9yZSAxMQpzdG9yZSAxMApleHRyYWN0IDIgMApsb2FkIDExCmxvYWQgMTAKZWQyNTUxOXZlcmlmeV9iYXJlCiEKIQpyZXRzdWIKCi8vIGpzb25fcmVmCmpzb25yZWZfNjoKc3RvcmUgMTMKbG9hZCAxMwpleHRyYWN0IDIgMApwdXNoYnl0ZXMgMHg3Mzc0NzI2OTZlNjc1ZjZiNjU3OSAvLyAic3RyaW5nX2tleSIKanNvbl9yZWYgSlNPTlN0cmluZwpzdG9yZSAxNApsb2FkIDE0CmxlbgppdG9iCmV4dHJhY3QgNiAwCmxvYWQgMTQKY29uY2F0CnN0b3JlIDE0CmxvYWQgMTMKZXh0cmFjdCAyIDAKcHVzaGJ5dGVzIDB4NzU2OTZlNzQ1ZjZiNjU3OSAvLyAidWludF9rZXkiCmpzb25fcmVmIEpTT05VaW50NjQKc3RvcmUgMTUKbG9hZCAxMwpleHRyYWN0IDIgMApwdXNoYnl0ZXMgMHg2ZjYyNmE1ZjZiNjU3OSAvLyAib2JqX2tleSIKanNvbl9yZWYgSlNPTk9iamVjdApzdG9yZSAxNgpsb2FkIDE2CmxlbgppdG9iCmV4dHJhY3QgNiAwCmxvYWQgMTYKY29uY2F0CnN0b3JlIDE2CmxvYWQgMTQKc3RvcmUgMjAKbG9hZCAyMApzdG9yZSAxOQpwdXNoaW50IDEyIC8vIDEyCnN0b3JlIDE3CmxvYWQgMTcKbG9hZCAyMApsZW4KKwpzdG9yZSAxOApsb2FkIDE4CnB1c2hpbnQgNjU1MzYgLy8gNjU1MzYKPAphc3NlcnQKbG9hZCAxNwppdG9iCmV4dHJhY3QgNiAwCmxvYWQgMTUKaXRvYgpjb25jYXQKbG9hZCAxNgpzdG9yZSAyMApsb2FkIDE5CmxvYWQgMjAKY29uY2F0CnN0b3JlIDE5CmxvYWQgMTgKc3RvcmUgMTcKbG9hZCAxNwppdG9iCmV4dHJhY3QgNiAwCmNvbmNhdApsb2FkIDE5CmNvbmNhdApyZXRzdWIKCi8vIG5vb3AKbm9vcF83OgppbnRjXzEgLy8gMQpyZXR1cm4KCi8vIHJlcGxhY2UKcmVwbGFjZV84OgpzdG9yZSAyNgpzdG9yZSAyNQpleHRyYWN0IDIgMApsb2FkIDI1CmxvYWQgMjYKZXh0cmFjdCAyIDAKcmVwbGFjZTMKc3RvcmUgMjcKbG9hZCAyNwpsZW4KaXRvYgpleHRyYWN0IDYgMApsb2FkIDI3CmNvbmNhdApzdG9yZSAyNwpsb2FkIDI3CnJldHN1YgoKLy8gc2hhM18yNTYKc2hhMzI1Nl85OgpleHRyYWN0IDIgMApzaGEzXzI1NgpzdG9yZSAyOQpsb2FkIDI5CmxlbgppdG9iCmV4dHJhY3QgNiAwCmxvYWQgMjkKY29uY2F0CnN0b3JlIDI5CmxvYWQgMjkKcmV0c3ViCgovLyB2cmZfdmVyaWZ5CnZyZnZlcmlmeV8xMDoKc3RvcmUgMzUKc3RvcmUgMzQKZXh0cmFjdCAyIDAKbG9hZCAzNApsb2FkIDM1CnZyZl92ZXJpZnkgVnJmQWxnb3JhbmQKc3RvcmUgMzgKc3RvcmUgMzcKbG9hZCAzOAppbnRjXzEgLy8gMQo9PQphc3NlcnQKbG9hZCAzNwpzdG9yZSAzNgpwdXNoaW50IDY0IC8vIDY0CmxvYWQgMzYKbGVuCj09CmFzc2VydApsb2FkIDM2CnJldHN1Yg==",
+        "clear": "I3ByYWdtYSB2ZXJzaW9uIDcKcHVzaGludCAwIC8vIDAKcmV0dXJu"
+    },
+    "schema": {
+        "local": {
+            "declared": {},
+            "reserved": {}
+        },
+        "global": {
+            "declared": {},
+            "reserved": {}
+        }
+    },
+    "contract": {
+        "name": "DemoAVM7",
+        "methods": [
+            {
+                "name": "b64decode",
+                "args": [
+                    {
+                        "type": "string",
+                        "name": "b64encoded"
+                    }
+                ],
+                "returns": {
+                    "type": "string"
+                },
+                "desc": "Base64Decode can be used to decode either a std or url encoded string\nCost: 1 + 1 per 16 bytes of A\nNote:     IF you have the option to decode prior to submitting the app call     transaction, you _should_.     This should _only_ be used in the case that there is no way to decode     the bytestring prior to submitting the transaction."
+            },
+            {
+                "name": "block",
+                "args": [
+                    {
+                        "type": "uint64",
+                        "name": "round"
+                    }
+                ],
+                "returns": {
+                    "type": "(uint64,byte[32])"
+                },
+                "desc": "New block operations for getting timestamp or seed of a historical round"
+            },
+            {
+                "name": "ed25519verify_bare",
+                "args": [
+                    {
+                        "type": "string",
+                        "name": "msg"
+                    },
+                    {
+                        "type": "address",
+                        "name": "pubkey"
+                    },
+                    {
+                        "type": "byte[64]",
+                        "name": "sig"
+                    }
+                ],
+                "returns": {
+                    "type": "bool"
+                }
+            },
+            {
+                "name": "json_ref",
+                "args": [
+                    {
+                        "type": "string",
+                        "name": "json_str"
+                    }
+                ],
+                "returns": {
+                    "type": "(string,uint64,string)"
+                },
+                "desc": "Cost: 25 + 2 per 7 bytes of A"
+            },
+            {
+                "name": "noop",
+                "args": [],
+                "returns": {
+                    "type": "void"
+                }
+            },
+            {
+                "name": "replace",
+                "args": [
+                    {
+                        "type": "string",
+                        "name": "orig"
+                    },
+                    {
+                        "type": "uint64",
+                        "name": "start"
+                    },
+                    {
+                        "type": "string",
+                        "name": "replace_with"
+                    }
+                ],
+                "returns": {
+                    "type": "string"
+                },
+                "desc": "replace(abcdef, 1, xyz) => axyzef\ncannot _grow_ original string"
+            },
+            {
+                "name": "sha3_256",
+                "args": [
+                    {
+                        "type": "string",
+                        "name": "to_hash"
+                    }
+                ],
+                "returns": {
+                    "type": "byte[]"
+                },
+                "desc": "Cost: 130"
+            },
+            {
+                "name": "vrf_verify",
+                "args": [
+                    {
+                        "type": "byte[]",
+                        "name": "msg"
+                    },
+                    {
+                        "type": "byte[80]",
+                        "name": "proof"
+                    },
+                    {
+                        "type": "address",
+                        "name": "pub_key"
+                    }
+                ],
+                "returns": {
+                    "type": "byte[64]"
+                },
+                "desc": "Verify that some message was used to generate a proof generated by a given public key\nCost: Takes 5700 ops"
+            }
+        ],
+        "networks": {},
+        "desc": "Examples for teal ops that are new for AVM 7"
+    }
+}
