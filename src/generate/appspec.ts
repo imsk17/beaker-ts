@@ -1,8 +1,28 @@
 import type algosdk from 'algosdk';
 
-export enum AVMType {
-  uint64,
-  bytes,
+export interface AppSpec {
+  hints: HintSpec;
+  schema: SchemaSpec;
+  source: AppSources;
+  contract: algosdk.ABIContract;
+}
+
+export type HintSpec = Record<string, Hint>;
+
+export interface SchemaSpec {
+  local: Schema;
+  global: Schema;
+}
+
+export interface AppSources {
+  approval: string;
+  clear: string;
+}
+
+export interface Hint {
+  structs: Record<string, Struct>;
+  readonly: boolean;
+  default_arguments: Record<string, DefaultArgument>;
 }
 
 type StructElement = [string, string];
@@ -15,14 +35,11 @@ export interface DefaultArgument {
   source: string;
   data: string | bigint | number;
 }
-export interface Hint {
-  structs: Record<string, Struct>;
-  readonly: boolean;
-  default_arguments: Record<string, DefaultArgument>;
+
+export enum AVMType {
+  uint64,
+  bytes,
 }
-
-export type HintSpec = Record<string, Hint>;
-
 export interface DeclaredSchemaValueSpec {
   type: AVMType;
   key: string;
@@ -61,21 +78,4 @@ export function getStateSchema(s: Schema): StateSchema {
   }
 
   return { uints: uints, bytes: bytes };
-}
-
-export interface SchemaSpec {
-  local: Schema;
-  global: Schema;
-}
-
-export interface AppSources {
-  approval: string;
-  clear: string;
-}
-
-export interface AppSpec {
-  hints: HintSpec;
-  schema: SchemaSpec;
-  source: AppSources;
-  contract: algosdk.ABIContract;
 }
