@@ -2,7 +2,7 @@
   "name": "beaker-ts",
   "version": "0.0.55",
   "description": "",
-  "main": "./lib/index.js",
+  "main": "./dist/index.js",
   "type":"commonjs",
   "scripts": {
     "build": "npx tsc -p .",
