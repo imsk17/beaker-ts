@@ -1,3 +1,7 @@
+
+> :warning: **Just a patch until the [ISSUE](https://github.com/algorand-devrel/beaker-ts/issues/18) is resolved ** 
+> :warning: **The fork should be replaced as soon as the original repo starts supporting cjs** 
+
 # Beaker Typescript Client Generator
 
 > :warning: **Experimental. Zero tests. Please report issues**
